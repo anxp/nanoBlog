@@ -1,0 +1,39 @@
+.footer
+{
+    clear:both;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    padding:5px;
+    text-align:center;
+    background-color:#007bff;
+    color:#F3F3F3;
+}
+
+.header
+{
+    clear:both;
+    top: 0;
+    width: 100%;
+    height: auto;
+    padding: 5px;
+    text-align:left;
+    background-color:#007bff;
+    color:#F3F3F3;
+}
+
+/* This is for textarea */
+.form-control
+{
+    border-radius: 0;
+}
+
+/* This is for SAVE button*/
+.input-group-append {
+    margin-right: 0;
+}
+
+/* Initial style for article editor - almost all DIV's hidden */
+#articleForm, #articleFooter {
+    display: none;
+}
