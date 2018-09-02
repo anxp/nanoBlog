@@ -13,6 +13,12 @@ if($_SESSION['role'] !== 'admin') {
     header("Location: index.php");
     exit;
 }
+//--------------------- if user authorized let's proceed... ------------------------------------------------------------
+define('DS', DIRECTORY_SEPARATOR);
+require_once 'contentController.php';
+require_once '..'.DS.'libphp'.DS.'db.class.php';
+$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$categoriesArr = contentController::getCategories($db);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,7 +33,6 @@ if($_SESSION['role'] !== 'admin') {
     <link rel="stylesheet" href="./styles/admstyle.css">
 </head>
 <body>
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12 mb-2">
@@ -60,10 +65,9 @@ if($_SESSION['role'] !== 'admin') {
                         <input id="articleTitle" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
                         <select class="custom-select" id="articleCategory">
                             <option selected>Категория</option>
-                            <option value="1">Политика</option>
-                            <option value="2">Экономика</option>
-                            <option value="3">Технологии</option>
-                            <option value="4">Спорт</option>
+                            <?php foreach($categoriesArr as $key => $element): ?>
+                            <option value="<?=$key?>"><?=$element?></option>
+                            <?php endforeach; ?>
                         </select>
                         <select class="custom-select" id="articleStatus">
                             <option selected>Черновик</option>

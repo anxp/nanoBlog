@@ -8,7 +8,7 @@
 ini_set('session.save_path', '/Users/andrey/Sites/sessions');
 
 define('DS', DIRECTORY_SEPARATOR);
-include '..'.DS.'libphp'.DS.'db.class.php';
+require_once '..'.DS.'libphp'.DS.'db.class.php';
 
 function cleanString($str) {
     $str = trim($str);

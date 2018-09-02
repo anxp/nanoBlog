@@ -49,6 +49,7 @@
 </div>
 <script src="../libjs/shakeobject.js"></script>
 <script>
+    // Below is simple hash function...
     // TODO: replace with something more serious
     var hash = function(s) {
         /* Simple hash function. */
