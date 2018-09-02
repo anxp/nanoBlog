@@ -7,6 +7,12 @@
  */
 ini_set('session.save_path', '/Users/andrey/Sites/sessions');
 session_start();
+
+//check if role is not admin then redirect to login page
+if($_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
