@@ -7,19 +7,21 @@
  */
 class Article {
     private $artID; //we will not set article ID in constructor because this field automatically autoincremented in Database
-    private $isPublished; //Boolean status == 0 || 1 (published or not)
+    private $isPublished; //0 == not published, 1 == published
     private $title; //Title of article
     private $content;  //Body of article
     private $category; //Category of article INT!!!! not STRING!!!
     private $kwords; //String with keywords separated with [,]
+    private $attImage; //Attached image to article
 
-    public function __construct($isPublished, $title, $content, $category, $kwords)
+    public function __construct($isPublished, $title, $content, $category, $kwords, $attImage)
     {
-        $this->isPublished = $isPublished;
-        $this->title = $title;
-        $this->content = $content;
-        $this->category = $category;
-        $this->kwords = $kwords;
+        $this->isPublished = intval($isPublished);
+        $this->title = self::cleanString($title);
+        $this->content = $content; //the only variable we can't filter, because html is allowed in our text form
+        $this->category = intval($category);
+        $this->kwords = self::cleanString($kwords);
+        $this->attImage = self::cleanString($attImage);
     }
 
     public function saveToDB(object $db_conn)
@@ -29,11 +31,12 @@ class Article {
         $content = $db_conn->escape($this->content);
         $category = $db_conn->escape($this->category);
         $kwords = $db_conn->escape($this->kwords);
+        $attImage = $db_conn->escape($this->attImage);
 
-        $sql = "INSERT INTO `articles` (`is_published`, `title`, `content`, `category`, `kwords`) VALUES ('{$isPublished}', '{$title}', '{$content}', '{$category}', '$kwords');";
+        $sql = "INSERT INTO `articles` (`is_published`, `title`, `content`, `category`, `kwords`, `att_image`) VALUES ('{$isPublished}', '{$title}', '{$content}', '{$category}', '{$kwords}', '{$attImage}');";
         $sqlResponse = $db_conn->query($sql);
 
-        return ($sqlResponse);
+        return ($sqlResponse); //usually true or false
     }
 
     public static function getCategories(object $db_conn) {
@@ -59,5 +62,11 @@ class Article {
             string(18) "Экономика"
         }
         */
+    }
+
+    public static function cleanString($str) {
+        $str = trim($str);
+        $str = strip_tags($str);
+        return $str;
     }
 }
