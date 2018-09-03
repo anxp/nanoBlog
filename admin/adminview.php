@@ -5,20 +5,27 @@
  * Date: 9/2/18
  * Time: 12:17 AM
  */
-ini_set('session.save_path', '/Users/andrey/Sites/sessions');
-session_start();
-
-//check if role is not admin then redirect to login page
-if($_SESSION['role'] !== 'admin') {
-    header("Location: index.php");
-    exit;
-}
+require_once 'safeEnvironmentInitialization.php';
 //--------------------- if user authorized let's proceed... ------------------------------------------------------------
+
+if($_SESSION['answertype'] === 'ERROR') { //if we got an error from postController, let's handle it:
+    $answerType = $_SESSION['answertype'];
+    $errDescription = $_SESSION['message'];
+    $savedUserInput = json_decode($_SESSION['saveduserinput'], true);
+    //now, we have all content that user tried to submit last time:
+    //$savedUserInput['title'] for TITLE, $savedUserInput['body'] for BODY, $savedUserInput['category'] for CATEGORY and so on...
+} else {
+    //if postController HAS NOT returned error, just explicitly declare variables as empties - it's better then if they not exists at all
+    $answerType = '';
+    $errDescription = '';
+    $savedUserInput = '';
+}
+
 define('DS', DIRECTORY_SEPARATOR);
-require_once 'contentController.php';
+require_once '..'.DS.'libphp'.DS.'Article.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
-$categoriesArr = contentController::getCategories($db);
+$categoriesArr = Article::getCategories($db); //Load categories from DataBase to indexed array
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,17 +66,46 @@ $categoriesArr = contentController::getCategories($db);
     <div class="row">
         <div class="col-md-8">
             <div id="articleBlock" class="border border-primary">
-                <div id="articleHeader" class="header"><b>Создайте новую запись</b></div>
-                <form id="articleForm" class="p-1">
+                <div id="articleHeader" class="header">
+
+                    <!-- PHP Code Insertion -->
+                    <!-- If ERROR - notify user and show error description, else just show standard welcome to create new article -->
+                    <?php if ($answerType === 'ERROR') { ?>
+                        <?= '<b>Ошибка: '.$errDescription.'</b> <a class="text-light" href="postController.php?resetall=true">Удалить все, не хочу сохранять</a>' ?>
+                    <?php } else { ?>
+                        <?= '<b>Нажмите, чтобы создать новую запись</b>' ?>
+                    <?php } ?>
+                    <!------------------------>
+
+                </div>
+                <form id="articleForm" class="p-1" method="post" action="postController.php">
                     <div class="input-group" id="articleTopControls">
-                        <input id="articleTitle" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
-                        <select class="custom-select" id="articleCategory">
+
+                        <!-- PHP Code Insertion -->
+                        <!-- If we have ERROR with error description = Empty title. - do nothing, else output title, saved from last page reload. -->
+                        <?php if($answerType === 'ERROR' && $errDescription === 'Empty title.') { ?>
+                            <input id="articleTitle" name="title" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
+                        <?php } else { ?>
+                            <input value="<?= $savedUserInput['title'] ?>" id="articleTitle" name="title" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
+                        <?php } ?>
+                        <!------------------------>
+
+                        <select id="articleCategory" name="category" class="custom-select">
+
+                            <!-- PHP Code Insertion -->
+                            <!-- Категории мы выводим не запоминая указанную пользователем категорию, так как выбранная SELECTED
+                            категория НЕ нумеруется, а называется своим НАЗВАНИЕМ и получается если пользователь выбрал категорию, ее можно запомнить (ее индекс),
+                            но перезагрузив страницу, она станет SELECTED и при следующей отправке на сервер intval(СЛОВО) вернет 0, и соответственно
+                            при следующей перезагрузке категория сбросится в дефолтную так как 0 будет интерпретирован как дефолтная. Короче - запомнить выбранный
+                            пункт меню - гемор еще тот -->
                             <option selected>Категория</option>
                             <?php foreach($categoriesArr as $key => $element): ?>
                             <option value="<?=$key?>"><?=$element?></option>
                             <?php endforeach; ?>
+                            <!------------------------>
+
                         </select>
-                        <select class="custom-select" id="articleStatus">
+                        <select id="articleStatus" name="status" class="custom-select" >
                             <option selected>Черновик</option>
                             <option value="1">Опубликовано</option>
                         </select>
@@ -79,7 +115,8 @@ $categoriesArr = contentController::getCategories($db);
                     </div>
 
                     <div id="articleBody" class="form-group mb-0">
-                        <textarea class="form-control" id="articleBodyText" rows="10"></textarea>
+                        <!-- если с телом записи ошибок нет, но есть другая ошибка, то вывести сохраненное тело записи -->
+                        <textarea id="articleBodyText" name="body" class="form-control" rows="10" ><?php if ($answerType === 'ERROR' && $errDescription !== 'Empty body.') echo $savedUserInput['body']; ?></textarea>
                     </div>
                 </form>
                 <div id="articleFooter" class="footer">Здесь можно будет добавить ключевые слова и картинку</div>
