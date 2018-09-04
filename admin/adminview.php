@@ -23,9 +23,17 @@ if($_SESSION['answertype'] === 'ERROR') { //if we got an error from postControll
 
 define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
+require_once '..'.DS.'libphp'.DS.'Pagination.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
+
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $categoriesArr = Article::getCategories($db); //Load categories from DataBase to indexed array
+
+$pagination = new Pagination($db);
+$currentPageTOC = $pagination->getCurrentPageItems($_GET['page']); //TOC is Table Of Contents
+$totalPagesNum = $pagination->getTotalPagesNumber();
+
+//var_dump($currentPageTOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -65,7 +73,7 @@ $categoriesArr = Article::getCategories($db); //Load categories from DataBase to
     </div>
     <div class="row">
         <div class="col-md-8">
-            <div id="articleBlock" class="border border-primary">
+            <div id="articleBlock" class="border border-primary mb-2">
                 <div id="articleHeader" class="header">
 
                     <!-- PHP Code Insertion -->
@@ -121,37 +129,53 @@ $categoriesArr = Article::getCategories($db); //Load categories from DataBase to
                 </form>
                 <div id="articleFooter" class="footer">Здесь можно будет добавить ключевые слова и картинку</div>
             </div>
+            <div class="d-flex justify-content-center">
+            <nav>
+                <ul class="pagination">
+                    <!-- Вывод начального блока пагинации (кнопки Предыдущая и Первая) -->
+                    <li class="page-item">
+                        <a class="page-link" href="adminview.php?page=1">Первая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="adminview.php?page=<?= (intval($_GET['page'])-1) < 0 ? 0 : (intval($_GET['page'])-1) ?>">Предыдущая</a>
+                    </li>
+                    <!------------------------------------------------------------------->
+
+                    <!-- Вывод центрального блока пагинации (цифры) -->
+                    <?php for($i=1; $i<=$totalPagesNum; $i++): ?>
+                        <li class="page-item">
+                                <?= '<a class="page-link" href="adminview.php?page='.$i.'">'.$i.'</a>' ?>
+                        </li>
+                    <?php endfor; ?>
+                    <!------------------------------------------------>
+
+                    <!-- Вывод конечного блока пагинации (кнопки Следующая и Последняя) -->
+                    <li class="page-item">
+                        <a class="page-link" href="adminview.php?page=<?= (intval($_GET['page'])+1) <= $totalPagesNum ? (intval($_GET['page'])+1) : $totalPagesNum ?>">Следующая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="adminview.php?page=<?= $totalPagesNum ?>">Последняя</a>
+                    </li>
+                    <!-------------------------------------------------------------------->
+                </ul>
+            </nav>
+            </div>
+            <div class="border border-secondary p-2">
+                <!-- PHP Code Insertion -->
+                <!-- Print 10 (or other, if was redefined) records per page: -->
+                <?php for($i=0; $i<count($currentPageTOC); $i++): ?>
+                    <a href="postController.php?edit=<?= $currentPageTOC[$i][0] ?>" class="<?= (intval($currentPageTOC[$i][1])===0) ? 'text-danger' : 'text-success' ?>"><?= $status=(intval($currentPageTOC[$i][1])===0) ? '[DRFT]' : '[PUBL]' ?><?= '['.$currentPageTOC[$i][0].'] '.$currentPageTOC[$i][2] ?></a><br>
+                <?php endfor; ?>
+                <!------------------------>
+            </div>
         </div>
         <div class="col-md-4">
+
         </div>
     </div>
     <div class="row">
         <div class="col-md-12">
-            <nav>
-                <ul class="pagination">
-                    <li class="page-item">
-                        <a class="page-link" href="#">Previous</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">1</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">3</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">4</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">5</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
+
         </div>
     </div>
 </div>

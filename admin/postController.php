@@ -31,7 +31,19 @@ if (is_numeric($_POST['category']) && !empty($_POST['title']) && !empty($_POST['
     //if category set correct, title and body also not empty, let write article to Database:
     //Order of parameters in constructor are: 1.isPublished 2.title 3.content 4.category 5.kwords 6.attImage
     $article = new Article($_POST['status'], $_POST['title'], $_POST['body'], $_POST['category'], '', '');
-    $article->saveToDB($db);
+    if($article->saveToDB($db)) {
+        $_SESSION['answertype'] = 'OK';
+        $_SESSION['message'] = 'Record saved to DB!';
+        resetDraft();
+        header("Location: adminview.php");
+        exit;
+    } else {
+        $_SESSION['answertype'] = 'ERROR';
+        $_SESSION['message'] = 'Article->saveToDB method returned FALSE';
+        header("Location: adminview.php");
+        exit;
+    }
+
 } else {
     //return error with description what's wrong, and saved user input!!!, so it's not necessary to retype all content from scratch:
     switch (true) {

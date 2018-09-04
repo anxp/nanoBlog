@@ -5,7 +5,7 @@
  * Date: 9/1/18
  * Time: 4:58 PM
  */
-ini_set('session.save_path', '/Users/andrey/Sites/sessions');
+//ini_set('session.save_path', '/Users/andrey/Sites/sessions');
 
 define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'db.class.php';
