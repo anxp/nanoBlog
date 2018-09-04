@@ -162,7 +162,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
             </div>
             <div class="border border-secondary p-2">
                 <!-- PHP Code Insertion -->
-                <!-- Print 10 (or other, if was redefined) records per page: -->
+                <!-- Вывод 10 записей согласно id страницы. Записи выводятся в обратной сортировке - сначала более новые -->
                 <?php for($i=0; $i<count($currentPageTOC); $i++): ?>
                     <a href="postController.php?edit=<?= $currentPageTOC[$i][0] ?>" class="<?= (intval($currentPageTOC[$i][1])===0) ? 'text-danger' : 'text-success' ?>"><?= $status=(intval($currentPageTOC[$i][1])===0) ? '[DRFT]' : '[PUBL]' ?><?= '['.$currentPageTOC[$i][0].'] '.$currentPageTOC[$i][2] ?></a><br>
                 <?php endfor; ?>
