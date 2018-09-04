@@ -33,7 +33,7 @@ $pagination = new Pagination($db);
 $currentPageTOC = $pagination->getCurrentPageItems($_GET['page']); //TOC is Table Of Contents
 $totalPagesNum = $pagination->getTotalPagesNumber();
 
-//var_dump($currentPageTOC);
+var_dump($savedUserInput);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -101,21 +101,27 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                         <select id="articleCategory" name="category" class="custom-select">
 
                             <!-- PHP Code Insertion -->
-                            <!-- Категории мы выводим не запоминая указанную пользователем категорию, так как выбранная SELECTED
-                            категория НЕ нумеруется, а называется своим НАЗВАНИЕМ и получается если пользователь выбрал категорию, ее можно запомнить (ее индекс),
-                            но перезагрузив страницу, она станет SELECTED и при следующей отправке на сервер intval(СЛОВО) вернет 0, и соответственно
-                            при следующей перезагрузке категория сбросится в дефолтную так как 0 будет интерпретирован как дефолтная. Короче - запомнить выбранный
-                            пункт меню - гемор еще тот -->
-                            <option selected>Категория</option>
+                            <!-- Формируем выпадающее меню категорий. Оно достаточно умное - запоминает указанную пользователем категорию, и если
+                            сохранение в базу не состоялось и черновик вернулся на доработку, подставляется выбранная пользователем категория. -->
+
+                            <?= (intval($savedUserInput['category']) === 0 ? '<option selected>Категория</option>' : '') ?>
                             <?php foreach($categoriesArr as $key => $element): ?>
-                            <option value="<?=$key?>"><?=$element?></option>
+                            <option <?= (intval($key) === intval($savedUserInput['category'])) ? 'selected' : '' ?> value="<?=$key?>"><?=$element?></option>
                             <?php endforeach; ?>
                             <!------------------------>
 
                         </select>
-                        <select id="articleStatus" name="status" class="custom-select" >
-                            <option selected>Черновик</option>
-                            <option value="1">Опубликовано</option>
+
+                        <select id="articleStatus" name="status" class="custom-select">
+
+                            <!-- PHP Code Insertion -->
+                            <!-- Формируем меню опубликовано/черновик. Здесь мы также запоминаем какой пункт выбрал пользователь,
+                            и при необходимости подставляем это значение. Но в данном случае все гораздо проще чем с категориями,
+                            так как содержимое этого меню мы не подтягиваем с БД -->
+                            <option <?= (intval($savedUserInput['status']) === 0 ? 'selected' : '') ?> value="0">Черновик</option>
+                            <option <?= (intval($savedUserInput['status']) === 1 ? 'selected' : '') ?> value="1">Опубликовано</option>
+                            <!------------------------>
+
                         </select>
                         <div class="input-group-append input-group-prepend" >
                             <button id="articleSave" class="btn btn-success" type="submit">Сохранить</button>
