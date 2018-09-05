@@ -12,18 +12,52 @@ class PostController {
         $this->db_conn = $db_conn;
     }
 
+    //This method will be used to handle EXISTING & EDITED post/article.
+    public function existingEditedPostHandler(array $POST) {
+
+        //We don't even try to handle 'as existing record' if $POST is empty (no record at all), so if $POST is empty -> return
+        if (empty($POST)) {return;}
+
+        //We proceed ONLY if isset $POST['artid'], - this is a sign of we deal with EDITED RECORD, not new!
+        if (isset($POST['artid']) && intval($POST['artid']) > 0) {
+            $artId = intval($POST['artid']);
+            $editedArticle = new Article($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', '');
+
+            //we set ID explicitly, because constructor does not have ID in arguments -
+            // this is OK for new articles, but when edit existing, we need specify ID explicitly
+            $editedArticle->set_artID($artId);
+
+            //Now we can update article/record in DB
+            if ($editedArticle->updateToDB($this->db_conn)) { //Trying to save EDITED article to Database
+                $_SESSION['answertype'] = 'SUCCESS';
+                $_SESSION['message'] = 'Record/article updated to DB.';
+                return; //Return back to calling code
+            } else { //If $article->updateToDB method returned FALSE we need to handle the error
+                $_SESSION['answertype'] = 'ERROR';
+                $_SESSION['message'] = 'Article->updateToDB method returned FALSE';
+                return; //Return back to calling code
+            }
+
+        } else {
+            return;
+        }
+    }
+
     //This method will be used to handle NEW post/article.
     //It responsible for NOT data loss in case of user error, and for give user descriptive error message if something goes wrong
     public function newPostHandler(array $POST) {
-        if (empty($POST)) {return;} //We don't even try to handle new record if $POST is empty, so THERE IS NO RECORD!
+
+        //We don't even try to handle new record if $POST is empty (no new record),
+        //OR POST[] contains element 'artid' (article ID), which means this is NOT A NEW RECORD, but edited existing!
+        if (empty($POST) || isset($POST['artid'])) {return;}
+
         if (is_numeric($POST['category']) && !empty($POST['title']) && !empty($POST['body'])) {
             //if category set correct, title and body also not empty, let write article to Database:
             //Order of parameters in constructor are: 1.isPublished 2.title 3.content 4.category 5.kwords 6.attImage
             $article = new Article($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', ''); //Let's create new Article object
             if($article->saveToDB($this->db_conn)) { //Trying to save article to Database
-                $_SESSION['answertype'] = 'OK';
-                $_SESSION['message'] = 'Record saved to DB!';
-                self::resetDraft(); //If all fine, we don't need saved draft anymore
+                $_SESSION['answertype'] = 'SUCCESS';
+                $_SESSION['message'] = 'Record/article saved to DB.';
                 return; //Return back to calling code
 
             } else { //If $article->saveToDB method returned FALSE we need to handle the error
@@ -38,17 +72,17 @@ class PostController {
                 case (!is_numeric($POST['category'])):
                     $_SESSION['answertype'] = 'ERROR';
                     $_SESSION['message'] = 'Wrong category.';
-                    $_SESSION['saveduserinput'] = json_encode($POST);
+                    $_SESSION['content'] = json_encode($POST);
                     break;
                 case (empty($POST['title'])):
                     $_SESSION['answertype'] = 'ERROR';
                     $_SESSION['message'] = 'Empty title.';
-                    $_SESSION['saveduserinput'] = json_encode($POST);
+                    $_SESSION['content'] = json_encode($POST);
                     break;
                 case (empty($POST['body'])):
                     $_SESSION['answertype'] = 'ERROR';
                     $_SESSION['message'] = 'Empty body.';
-                    $_SESSION['saveduserinput'] = json_encode($POST);
+                    $_SESSION['content'] = json_encode($POST);
                     break;
                 default:
                     echo 'Something really went wrong...';
@@ -57,13 +91,30 @@ class PostController {
         }
     }
 
+    //This method will be used for routine actions - delete draft, or load article from DB if user requested it
     public function routineHandler(array $GET) {
         switch (true) {
             //If user explicitly ordered to DELETE draft of article/record
             case (isset($GET['resetall']) && $GET['resetall'] === 'true'):
                 self::resetDraft();
                 break;
+            //If user wants to edit existing article/record
             case (isset($GET['edit'])):
+                if($articleToEdit = Article::readFromDB($this->db_conn, intval($GET['edit']))) {
+
+                    $articleToEditAssocArray = array(); //This array we'll include in server reply to user. All fields of requested record will be here.
+                    $articleToEditAssocArray['artid'] = $articleToEdit->get_artID();
+                    $articleToEditAssocArray['status'] = $articleToEdit->get_isPublished();
+                    $articleToEditAssocArray['title'] = $articleToEdit->get_title();
+                    $articleToEditAssocArray['body'] = $articleToEdit->get_content();
+                    $articleToEditAssocArray['category'] = $articleToEdit->get_category();
+                    $articleToEditAssocArray['keywords'] = $articleToEdit->get_kwords();
+                    $articleToEditAssocArray['attimage'] = $articleToEdit->get_attImage();
+
+                    $_SESSION['answertype'] = 'SUCCESS';
+                    $_SESSION['message'] = 'Record/article loaded.';
+                    $_SESSION['content'] = json_encode($articleToEditAssocArray); //Pack whole record/article to JSON to more easily send to frontend
+                }
                 break;
         }
         return; //Return back to calling code
@@ -72,6 +123,6 @@ class PostController {
     public static function resetDraft() {
         unset($_SESSION['answertype']);
         unset($_SESSION['message']);
-        unset($_SESSION['saveduserinput']);
+        unset($_SESSION['content']);
     }
 }

@@ -8,23 +8,54 @@
 require_once 'safeEnvironmentInitialization.php';
 //--------------------- if user authorized let's proceed... ------------------------------------------------------------
 
-if($_SESSION['answertype'] === 'ERROR') { //if we got an error from postController, let's handle it:
-    $answerType = $_SESSION['answertype'];
-    $errDescription = $_SESSION['message'];
-    $savedUserInput = json_decode($_SESSION['saveduserinput'], true);
-    //now, we have all content that user tried to submit last time:
-    //$savedUserInput['title'] for TITLE, $savedUserInput['body'] for BODY, $savedUserInput['category'] for CATEGORY and so on...
-} else {
-    //if postController HAS NOT returned error, just explicitly declare variables as empties - it's better then if they not exists at all
-    $answerType = '';
-    $errDescription = '';
-    $savedUserInput = '';
+//Seems that all of cases in switch-case below are identical. It's true :) They are here for:
+//1. Visibility which cases are possible
+//2. Feature extension in future
+
+switch (true) {
+    case($_SESSION['answertype'] === 'ERROR'):
+        $answerType = $_SESSION['answertype'];
+        $message = $_SESSION['message'];
+
+        //In $content[] array we have all content that user tried to submit last time:
+        //$content['title'] for TITLE, $content['body'] for BODY, $content['category'] for CATEGORY and so on...
+        $content = json_decode($_SESSION['content'], true);
+        break;
+        
+    case($_SESSION['answertype'] === 'SUCCESS' && $_SESSION['message'] === 'Record/article loaded.'):
+        $answerType = $_SESSION['answertype'];
+        $message = $_SESSION['message'];
+
+        //This time, in $content[] array we have record/article loaded from DB to edit...
+        $content = json_decode($_SESSION['content'], true);
+
+        //We loaded existing record/article. So, seems we want to edit it. So, let extract $artid and apply it to corresponding hidden value of html form
+        $artid = $content['artid'];
+        break;
+
+    case($_SESSION['answertype'] === 'SUCCESS' && $_SESSION['message'] === 'Record/article updated to DB.'):
+        $answerType = $_SESSION['answertype'];
+        $message = $_SESSION['message'];
+
+        //This time, we have nothing in $content[] array because record successfully updated
+        $content = '';
+        break;
+
+    default:
+        //if postController HAS NOT returned response (ERROR || SUCCESS),
+        //just explicitly declare variables as empties - it's better then if they not exists at all
+        $answerType = '';
+        $message = '';
+        $content = '';
 }
 
 define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
 require_once '..'.DS.'libphp'.DS.'Pagination.Class.php';
+require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
+
+PostController::resetDraft(); //When all information loaded to corresponding variables, let's clean temporary storage
 
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $categoriesArr = Article::getCategories($db); //Load categories from DataBase to indexed array
@@ -32,8 +63,6 @@ $categoriesArr = Article::getCategories($db); //Load categories from DataBase to
 $pagination = new Pagination($db);
 $currentPageTOC = $pagination->getCurrentPageItems($_GET['page']); //TOC is Table Of Contents
 $totalPagesNum = $pagination->getTotalPagesNumber();
-
-var_dump($savedUserInput);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -79,7 +108,11 @@ var_dump($savedUserInput);
                     <!-- PHP Code Insertion -->
                     <!-- If ERROR - notify user and show error description, else just show standard welcome to create new article -->
                     <?php if ($answerType === 'ERROR') { ?>
-                        <?= '<b>Ошибка: '.$errDescription.'</b> <a class="text-light" href="postController.php?resetall=true">Удалить все, не хочу сохранять</a>' ?>
+                        <?= '<b>Ошибка: '.$message.'</b> <a class="text-light" href="postController.php?resetall=true">Удалить все, не хочу сохранять</a>' ?>
+                    <?php } elseif ($answerType === 'SUCCESS' && $message === 'Record/article loaded.') { ?>
+                        <?= '<b>Запись загружена на редактирование</b> <a class="text-light" href="postController.php?resetall=true">Отменить редактирование</a>' ?>
+                    <?php } elseif ($answerType === 'SUCCESS' && $message === 'Record/article updated to DB.') { ?>
+                        <?= '<b>Запись успешно обновлена</b>' ?>
                     <?php } else { ?>
                         <?= '<b>Нажмите, чтобы создать новую запись</b>' ?>
                     <?php } ?>
@@ -87,14 +120,22 @@ var_dump($savedUserInput);
 
                 </div>
                 <form id="articleForm" class="p-1" method="post" action="postController.php">
+
+                    <!-- PHP Code Insertion -->
+                    <?php if($answerType === 'SUCCESS' && $message === 'Record/article loaded.') { ?>
+                    <!-- This hidden field is for article ID, requested for edit -->
+                    <input name="artid" type="hidden" value="<?= $artid ?>">
+                    <?php } ?>
+                    <!------------------------>
+
                     <div class="input-group" id="articleTopControls">
 
                         <!-- PHP Code Insertion -->
                         <!-- If we have ERROR with error description = Empty title. - do nothing, else output title, saved from last page reload. -->
-                        <?php if($answerType === 'ERROR' && $errDescription === 'Empty title.') { ?>
+                        <?php if($answerType === 'ERROR' && $message === 'Empty title.') { ?>
                             <input id="articleTitle" name="title" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
                         <?php } else { ?>
-                            <input value="<?= $savedUserInput['title'] ?>" id="articleTitle" name="title" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
+                            <input value="<?= isset($content['title']) ? $content['title'] : '' ?>" id="articleTitle" name="title" type="text" class="form-control" style="width: 50%" placeholder="Введите заголовок...">
                         <?php } ?>
                         <!------------------------>
 
@@ -104,9 +145,9 @@ var_dump($savedUserInput);
                             <!-- Формируем выпадающее меню категорий. Оно достаточно умное - запоминает указанную пользователем категорию, и если
                             сохранение в базу не состоялось и черновик вернулся на доработку, подставляется выбранная пользователем категория. -->
 
-                            <?= (intval($savedUserInput['category']) === 0 ? '<option selected>Категория</option>' : '') ?>
+                            <?= (intval($content['category']) === 0 ? '<option selected>Категория</option>' : '') ?>
                             <?php foreach($categoriesArr as $key => $element): ?>
-                            <option <?= (intval($key) === intval($savedUserInput['category'])) ? 'selected' : '' ?> value="<?=$key?>"><?=$element?></option>
+                            <option <?= (intval($key) === intval($content['category'])) ? 'selected' : '' ?> value="<?=$key?>"><?=$element?></option>
                             <?php endforeach; ?>
                             <!------------------------>
 
@@ -118,8 +159,8 @@ var_dump($savedUserInput);
                             <!-- Формируем меню опубликовано/черновик. Здесь мы также запоминаем какой пункт выбрал пользователь,
                             и при необходимости подставляем это значение. Но в данном случае все гораздо проще чем с категориями,
                             так как содержимое этого меню мы не подтягиваем с БД -->
-                            <option <?= (intval($savedUserInput['status']) === 0 ? 'selected' : '') ?> value="0">Черновик</option>
-                            <option <?= (intval($savedUserInput['status']) === 1 ? 'selected' : '') ?> value="1">Опубликовано</option>
+                            <option <?= (intval($content['status']) === 0 ? 'selected' : '') ?> value="0">Черновик</option>
+                            <option <?= (intval($content['status']) === 1 ? 'selected' : '') ?> value="1">Опубликовано</option>
                             <!------------------------>
 
                         </select>
@@ -129,8 +170,8 @@ var_dump($savedUserInput);
                     </div>
 
                     <div id="articleBody" class="form-group mb-0">
-                        <!-- если с телом записи ошибок нет, но есть другая ошибка, то вывести сохраненное тело записи -->
-                        <textarea id="articleBodyText" name="body" class="form-control" rows="10" ><?php if ($answerType === 'ERROR' && $errDescription !== 'Empty body.') echo $savedUserInput['body']; ?></textarea>
+                        <!-- Если тело записи присутствует, то выводим его -->
+                        <textarea id="articleBodyText" name="body" class="form-control" rows="10" ><?= isset($content['body']) ? $content['body'] : '' ?></textarea>
                     </div>
                 </form>
                 <div id="articleFooter" class="footer">Здесь можно будет добавить ключевые слова и картинку</div>

@@ -5,8 +5,13 @@
  * Date: 9/3/18
  * Time: 11:22 AM
  */
+//TODO - check Active Record pattern and maybe rewrite this class (Article) according to it
+
 class Article {
-    private $artID; //we will not set article ID in constructor because this field automatically autoincremented in Database
+    //Default value of artID is null. Why? Because if user forget specify it, and trying to update something in DB, we will allow
+    //DB-updating only when artID is numeric value,
+    //also, we will not set article ID in constructor because this field automatically autoincremented in Database
+    private $artID = null;
     private $isPublished; //0 == not published, 1 == published
     private $title; //Title of article
     private $content;  //Body of article
@@ -18,7 +23,7 @@ class Article {
     {
         $this->isPublished = intval($isPublished);
         $this->title = self::cleanString($title);
-        $this->content = $content; //the only variable we can't filter, because html is allowed in our text form
+        $this->content = trim($content); //the only variable we can't filter, because html is allowed in our text form
         $this->category = intval($category);
         $this->kwords = self::cleanString($kwords);
         $this->attImage = self::cleanString($attImage);
@@ -37,6 +42,48 @@ class Article {
         $sqlResponse = $db_conn->query($sql);
 
         return ($sqlResponse); //usually true or false
+    }
+
+    public function updateToDB(object $db_conn)
+    {
+        if (!$this->artID) {return false;} //If user have not specified artID, we don't even try to update something in DB!
+        $artID = $this->artID;
+        $isPublished = $db_conn->escape($this->isPublished);
+        $title = $db_conn->escape($this->title);
+        $content = $db_conn->escape($this->content);
+        $category = $db_conn->escape($this->category);
+        $kwords = $db_conn->escape($this->kwords);
+        $attImage = $db_conn->escape($this->attImage);
+
+        $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}', `att_image` = '{$attImage}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+        $sqlResponse = $db_conn->query($sql);
+
+        return ($sqlResponse); //usually true or false
+    }
+
+    //This method is static because we want to call it at the moment when object still not exists;
+    //If read from DB will OK, this method will return us a new Article object
+    public static function readFromDB(object $db_conn, $artID)
+    {
+        $sql = "SELECT `art_ID`, `is_published`, `title`, `content`, `category`, `kwords`, `att_image` FROM `articles` WHERE `art_ID` = {$artID};";
+        $sqlResponse = $db_conn->query($sql);
+        if(isset($sqlResponse[0])) {
+            $id = intval($sqlResponse[0]['art_ID']);
+            $isPublished = intval($sqlResponse[0]['is_published']);
+            $title = $sqlResponse[0]['title'];
+            $body = $sqlResponse[0]['content'];
+            $cat = intval($sqlResponse[0]['category']);
+            $kwords = $sqlResponse[0]['kwords'];
+            $img = $sqlResponse[0]['att_image'];
+
+            $newObject = new self($isPublished, $title, $body, $cat, $kwords, $img);
+
+            $newObject->set_artID($id); //Because constructor does not have article ID in arguments, we do this explicitly
+
+            return ($newObject); //if SQL response was not empty, we've created new Article Object and return it to user
+        } else {
+            return false; //Otherwise method returns false.
+        }
     }
 
     public static function getCategories(object $db_conn) {
@@ -68,5 +115,69 @@ class Article {
         $str = trim($str);
         $str = strip_tags($str);
         return $str;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function get_artID(): int
+    {
+        return $this->artID;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_isPublished(): int
+    {
+        return $this->isPublished;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_title(): string
+    {
+        return $this->title;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function get_content(): string
+    {
+        return $this->content;
+    }
+
+    /**
+     * @return int
+     */
+    public function get_category(): int
+    {
+        return $this->category;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_kwords(): string
+    {
+        return $this->kwords;
+    }
+
+    /**
+     * @return string
+     */
+    public function get_attImage(): string
+    {
+        return $this->attImage;
+    }
+
+    /**
+     * @param mixed $artID
+     */
+    public function set_artID($artID): void
+    {
+        $this->artID = intval($artID);
     }
 }

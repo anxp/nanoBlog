@@ -32,7 +32,7 @@ class Pagination {
         $sql = "SELECT `art_ID`, `is_published`, `title` FROM `articles` ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
         $sqlResponse = $this->db_conn->query($sql); //$sqlResponse contains 2-dim array with: [articleID, articleStatus (published or not) and articleTitle] X10
 
-        if(!$associative) { //this step is optional - if we want indexed array as response from DB instead of associative
+        if(!$associative) { //USUALLY WE WANT indexed array as response from DB instead of associative
             foreach ($sqlResponse as &$item) {
                 $item = array_values($item); //if we don't want associative array, lets reset in to indexed
             }
