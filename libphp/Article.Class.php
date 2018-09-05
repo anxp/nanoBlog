@@ -19,14 +19,33 @@ class Article {
     private $kwords; //String with keywords separated with [,]
     private $attImage; //Attached image to article
 
-    public function __construct($isPublished, $title, $content, $category, $kwords, $attImage)
+    private function __construct(){}
+
+    //This "constructor" we will use when new article creating:
+    public static function newArticle($isPublished, $title, $content, $category, $kwords, $attImage)
     {
-        $this->isPublished = intval($isPublished);
-        $this->title = self::cleanString($title);
-        $this->content = trim($content); //the only variable we can't filter, because html is allowed in our text form
-        $this->category = intval($category);
-        $this->kwords = self::cleanString($kwords);
-        $this->attImage = self::cleanString($attImage);
+        $newArticle = new self;
+        $newArticle->isPublished = intval($isPublished);
+        $newArticle->title = self::cleanString($title);
+        $newArticle->content = trim($content); //the only variable we can't filter, because html is allowed in our text form
+        $newArticle->category = intval($category);
+        $newArticle->kwords = self::cleanString($kwords);
+        $newArticle->attImage = self::cleanString($attImage);
+        return $newArticle;
+    }
+
+    //This "constructor" will be used when working with ALREADY EXISTING article:
+    public static function existingArticle($artID, $isPublished, $title, $content, $category, $kwords, $attImage)
+    {
+        $existingArticle = new self;
+        $existingArticle->artID = intval($artID);
+        $existingArticle->isPublished = intval($isPublished);
+        $existingArticle->title = self::cleanString($title);
+        $existingArticle->content = trim($content); //the only variable we can't filter, because html is allowed in our text form
+        $existingArticle->category = intval($category);
+        $existingArticle->kwords = self::cleanString($kwords);
+        $existingArticle->attImage = self::cleanString($attImage);
+        return $existingArticle;
     }
 
     public function saveToDB(object $db_conn)
@@ -76,9 +95,7 @@ class Article {
             $kwords = $sqlResponse[0]['kwords'];
             $img = $sqlResponse[0]['att_image'];
 
-            $newObject = new self($isPublished, $title, $body, $cat, $kwords, $img);
-
-            $newObject->set_artID($id); //Because constructor does not have article ID in arguments, we do this explicitly
+            $newObject = self::existingArticle($id, $isPublished, $title, $body, $cat, $kwords, $img);
 
             return ($newObject); //if SQL response was not empty, we've created new Article Object and return it to user
         } else {
@@ -91,7 +108,7 @@ class Article {
         $sqlResponse = $db_conn->query($sql); //perform request to MySQL DB
         $responseBody = array();
         //SQL response is 2 or 3-levels nested array, so to get end values we need to dig in...
-        for ($i=0; $i<count($sqlResponse); $i++) {
+        for ($i = 0; $i < count($sqlResponse); $i++) {
             $responseBody[intval($sqlResponse[$i]['cat_ID'])] = $sqlResponse[$i]['cat_name']; //REALLY BLACK MAGIC...
         }
         return $responseBody; //return 1-dimensional array with categories such as 'sport', 'politics' etc...
@@ -171,13 +188,5 @@ class Article {
     public function get_attImage(): string
     {
         return $this->attImage;
-    }
-
-    /**
-     * @param mixed $artID
-     */
-    public function set_artID($artID): void
-    {
-        $this->artID = intval($artID);
     }
 }

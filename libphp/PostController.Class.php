@@ -5,6 +5,8 @@
  * Date: 9/4/18
  * Time: 7:55 PM
  */
+
+//This class implements Data Mapper pattern - intermediary between User Data and Article Object
 class PostController {
     private $db_conn;
 
@@ -21,11 +23,7 @@ class PostController {
         //We proceed ONLY if isset $POST['artid'], - this is a sign of we deal with EDITED RECORD, not new!
         if (isset($POST['artid']) && intval($POST['artid']) > 0) {
             $artId = intval($POST['artid']);
-            $editedArticle = new Article($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', '');
-
-            //we set ID explicitly, because constructor does not have ID in arguments -
-            // this is OK for new articles, but when edit existing, we need specify ID explicitly
-            $editedArticle->set_artID($artId);
+            $editedArticle = Article::existingArticle($artId, $POST['status'], $POST['title'], $POST['body'], $POST['category'], '', '');
 
             //Now we can update article/record in DB
             if ($editedArticle->updateToDB($this->db_conn)) { //Trying to save EDITED article to Database
@@ -54,8 +52,10 @@ class PostController {
         if (is_numeric($POST['category']) && !empty($POST['title']) && !empty($POST['body'])) {
             //if category set correct, title and body also not empty, let write article to Database:
             //Order of parameters in constructor are: 1.isPublished 2.title 3.content 4.category 5.kwords 6.attImage
-            $article = new Article($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', ''); //Let's create new Article object
-            if($article->saveToDB($this->db_conn)) { //Trying to save article to Database
+            $article = Article::newArticle($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', ''); //Let's create new Article object
+
+            //Trying to save article to Database
+            if($article->saveToDB($this->db_conn)) {
                 $_SESSION['answertype'] = 'SUCCESS';
                 $_SESSION['message'] = 'Record/article saved to DB.';
                 return; //Return back to calling code
