@@ -22,3 +22,7 @@ $postcontroller->routineHandler($_GET);
 
 //we expect POST parameters only when user submits new (or edited) article/record
 $postcontroller->newPostHandler($_POST);
+
+//When all methods have done their job - we return back to Admin Panel
+header("Location: adminview.php");
+exit;
