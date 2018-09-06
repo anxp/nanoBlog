@@ -119,7 +119,8 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                     <!------------------------>
 
                 </div>
-                <form id="articleForm" class="p-1" method="post" action="postController.php">
+                <form id="articleForm" class="p-1" method="post" enctype="multipart/form-data" action="postController.php">
+                    <input type="hidden" name="MAX_FILE_SIZE" value="3000000">
 
                     <!-- PHP Code Insertion -->
                     <?php if($answerType === 'SUCCESS' && $message === 'Record/article loaded.') { ?>
@@ -173,8 +174,19 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                         <!-- Если тело записи присутствует, то выводим его -->
                         <textarea id="articleBodyText" name="body" class="form-control" rows="10" ><?= isset($content['body']) ? $content['body'] : '' ?></textarea>
                     </div>
+                    <div id="articleFooter" class="footer pb-0">
+                        <div class="input-group clearfix" id="articleFooterControls">
+
+                            <input type="file" class="custom-file" name="artimage" accept="image/jpeg,image/png" value="">
+                            <input id="keyWords" name="kwords" type="text" class="form-control-sm" style="width: 30%" placeholder="Ключевые слова (ч/з запятую)">
+                            <div class="_middle mx-2 mt-1">
+                                <label for="defaultCheck1" style="vertical-align: baseline">Премиум-доступ:</label>
+                                <input id="defaultCheck1" type="checkbox" name="checkbox" value="">
+                            </div>
+
+                        </div>
+                    </div>
                 </form>
-                <div id="articleFooter" class="footer">Здесь можно будет добавить ключевые слова и картинку</div>
             </div>
             <div class="d-flex justify-content-center">
             <nav>

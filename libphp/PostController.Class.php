@@ -10,6 +10,12 @@
 class PostController {
     private $db_conn;
 
+    private $uploadedImageName = '';
+
+    const SUPPORTED_FILES = ['image/jpeg', 'image/png', 'image/gif']; //Maybe make regular field from this, so user can re-assign it...?
+    const IMG_DIR = '..'.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR;
+    const THUMB_DIR = '..'.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR.'thumb'.DIRECTORY_SEPARATOR;
+
     public function __construct(object $db_conn) {
         $this->db_conn = $db_conn;
     }
@@ -118,6 +124,30 @@ class PostController {
                 break;
         }
         return; //Return back to calling code
+    }
+
+    //This method used to handle uploaded files (images) - check them, rename, move from temporary storage to website folder
+    public function uploadedFilesHandler(array $FILES) {
+
+        if (empty($FILES) || !isset($FILES['artimage'])) {return false;} //If we got not what we exactly expect, just return
+        if ($FILES['artimage']['error'] !== UPLOAD_ERR_OK) {return false;} //TODO: this case is really need to be handled, and message to user must be sent
+
+        //Check if file type is IN ALLOWED TYPES array. We don't trust $FILES['artimage']['type'] and check real MIME Content Type:
+        if (!in_array(mime_content_type($FILES['artimage']['tmp_name']), self::SUPPORTED_FILES)) {return false;}
+
+        $origName = basename($FILES['artimage']['name']); //Get original file name
+        $fileExt = pathinfo($origName, PATHINFO_EXTENSION); //Get file extension
+        $newName = uniqid().'.'.$fileExt; //Create new uniq name. TODO: improve to be more uniq
+        if (file_exists(self::IMG_DIR.$newName)) {
+            //TODO: do something if file w/ same name exists. More uniq?
+            }
+        $moveResult = move_uploaded_file($FILES["artimage"]["tmp_name"],self::IMG_DIR.$newName);
+
+        Image::generateThumbnail(self::IMG_DIR.$newName, self::THUMB_DIR, 250);
+
+        $this->uploadedImageName = $newName;
+
+        return $moveResult;
     }
 
     public static function resetDraft() {

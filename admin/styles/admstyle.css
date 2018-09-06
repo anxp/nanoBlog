@@ -10,6 +10,10 @@
     color:#F3F3F3;
 }
 
+._middle input, ._middle label{
+    vertical-align: middle;
+}
+
 .header
 {
     clear:both;

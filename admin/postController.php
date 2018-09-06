@@ -12,10 +12,14 @@ require_once 'safeEnvironmentInitialization.php';
 define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
 require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
+require_once '..'.DS.'libphp'.DS.'Image.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
 
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $postcontroller = new PostController($db);
+
+//if file present we handle it - check for type, rename, move to website folder
+$postcontroller->uploadedFilesHandler($_FILES);
 
 //we expect GET parameters for routine user actions, such as open specified article for edit, reset draft etc...
 $postcontroller->routineHandler($_GET);
