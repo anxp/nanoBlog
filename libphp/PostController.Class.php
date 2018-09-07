@@ -9,8 +9,7 @@
 //This class implements Data Mapper pattern - intermediary between User Data and Article Object
 class PostController {
     private $db_conn;
-
-    private $uploadedImageName = '';
+    private $uploadedImageName;
 
     const SUPPORTED_FILES = ['image/jpeg', 'image/png', 'image/gif']; //Maybe make regular field from this, so user can re-assign it...?
     const IMG_DIR = '..'.DIRECTORY_SEPARATOR.'img'.DIRECTORY_SEPARATOR;
@@ -21,15 +20,18 @@ class PostController {
     }
 
     //This method will be used to handle EXISTING & EDITED post/article.
-    public function existingEditedPostHandler(array $POST) {
+    public function existingEditedPostHandler(array $POST, array $FILES) {
 
         //We don't even try to handle 'as existing record' if $POST is empty (no record at all), so if $POST is empty -> return
         if (empty($POST)) {return;}
 
         //We proceed ONLY if isset $POST['artid'], - this is a sign of we deal with EDITED RECORD, not new!
         if (isset($POST['artid']) && intval($POST['artid']) > 0) {
+
             $artId = intval($POST['artid']);
-            $editedArticle = Article::existingArticle($artId, $POST['status'], $POST['title'], $POST['body'], $POST['category'], '', '');
+            $attImage = ($this->uploadedFilesHandler($FILES)) ? ($this->uploadedImageName) : ''; //Name of uploaded image, if upload-OK or upload-NotOK
+            //$attImage can be: 'somename' or ''. Method updateToDB will rewrite field in DB if 'somename' or just untouch it if '' - so we'll not lost image in DB if already exists
+            $editedArticle = Article::existingArticle($artId, $POST['status'], $POST['title'], $POST['body'], $POST['category'], '', $attImage);
 
             //Now we can update article/record in DB
             if ($editedArticle->updateToDB($this->db_conn)) { //Trying to save EDITED article to Database
@@ -49,7 +51,7 @@ class PostController {
 
     //This method will be used to handle NEW post/article.
     //It responsible for NOT data loss in case of user error, and for give user descriptive error message if something goes wrong
-    public function newPostHandler(array $POST) {
+    public function newPostHandler(array $POST, array $FILES) {
 
         //We don't even try to handle new record if $POST is empty (no new record),
         //OR POST[] contains element 'artid' (article ID), which means this is NOT A NEW RECORD, but edited existing!
@@ -58,7 +60,10 @@ class PostController {
         if (is_numeric($POST['category']) && !empty($POST['title']) && !empty($POST['body'])) {
             //if category set correct, title and body also not empty, let write article to Database:
             //Order of parameters in constructor are: 1.isPublished 2.title 3.content 4.category 5.kwords 6.attImage
-            $article = Article::newArticle($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', ''); //Let's create new Article object
+
+            $attImage = ($this->uploadedFilesHandler($FILES)) ? ($this->uploadedImageName) : ''; //Name of uploaded image, if exists
+
+            $article = Article::newArticle($POST['status'], $POST['title'], $POST['body'], $POST['category'], '', $attImage); //Let's create new Article object
 
             //Trying to save article to Database
             if($article->saveToDB($this->db_conn)) {
@@ -127,7 +132,8 @@ class PostController {
     }
 
     //This method used to handle uploaded files (images) - check them, rename, move from temporary storage to website folder
-    public function uploadedFilesHandler(array $FILES) {
+    //This method private, because we don't want allow call it outside newArticle / existingArticle context - image without article makes no sense
+    private function uploadedFilesHandler(array $FILES) :bool {
 
         if (empty($FILES) || !isset($FILES['artimage'])) {return false;} //If we got not what we exactly expect, just return
         if ($FILES['artimage']['error'] !== UPLOAD_ERR_OK) {return false;} //TODO: this case is really need to be handled, and message to user must be sent
@@ -138,16 +144,19 @@ class PostController {
         $origName = basename($FILES['artimage']['name']); //Get original file name
         $fileExt = pathinfo($origName, PATHINFO_EXTENSION); //Get file extension
         $newName = uniqid().'.'.$fileExt; //Create new uniq name. TODO: improve to be more uniq
-        if (file_exists(self::IMG_DIR.$newName)) {
+        /*if (file_exists(self::IMG_DIR.$newName)) {
             //TODO: do something if file w/ same name exists. More uniq?
-            }
+            //At the moment just ignoring this, overwrite
+            }*/
         $moveResult = move_uploaded_file($FILES["artimage"]["tmp_name"],self::IMG_DIR.$newName);
 
-        Image::generateThumbnail(self::IMG_DIR.$newName, self::THUMB_DIR, 250);
-
-        $this->uploadedImageName = $newName;
-
-        return $moveResult;
+        if ($moveResult) {
+            Image::generateThumbnail(self::IMG_DIR.$newName, self::THUMB_DIR, 250);
+            $this->uploadedImageName = $newName; //Save file name in object property, so methods newArticle and existingArticle can access it
+            return $moveResult;
+        } else {
+            return false;
+        }
     }
 
     public static function resetDraft() {

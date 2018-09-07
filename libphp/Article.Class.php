@@ -35,7 +35,7 @@ class Article {
     }
 
     //This "constructor" will be used when working with ALREADY EXISTING article:
-    public static function existingArticle($artID, $isPublished, $title, $content, $category, $kwords, $attImage)
+    public static function existingArticle($artID, $isPublished, $title, $content, $category, $kwords, $attImage = '')
     {
         $existingArticle = new self;
         $existingArticle->artID = intval($artID);
@@ -74,7 +74,13 @@ class Article {
         $kwords = $db_conn->escape($this->kwords);
         $attImage = $db_conn->escape($this->attImage);
 
-        $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}', `att_image` = '{$attImage}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+        if(empty($attImage)) { //If attImage was not specified, we will not even touch it in DB
+            $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+        } else {
+            //Otherwise - rewrite att_image field with new value:
+            $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}', `att_image` = '{$attImage}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+        }
+
         $sqlResponse = $db_conn->query($sql);
 
         return ($sqlResponse); //usually true or false

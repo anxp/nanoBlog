@@ -120,7 +120,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
 
                 </div>
                 <form id="articleForm" class="p-1" method="post" enctype="multipart/form-data" action="postController.php">
-                    <input type="hidden" name="MAX_FILE_SIZE" value="3000000">
+                    <input type="hidden" name="MAX_FILE_SIZE" value="2000000">
 
                     <!-- PHP Code Insertion -->
                     <?php if($answerType === 'SUCCESS' && $message === 'Record/article loaded.') { ?>
@@ -174,7 +174,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                         <!-- Если тело записи присутствует, то выводим его -->
                         <textarea id="articleBodyText" name="body" class="form-control" rows="10" ><?= isset($content['body']) ? $content['body'] : '' ?></textarea>
                     </div>
-                    <div id="articleFooter" class="footer pb-0">
+                    <div id="articleFooter" class="footer pb-1">
                         <div class="input-group clearfix" id="articleFooterControls">
 
                             <input type="file" class="custom-file" name="artimage" accept="image/jpeg,image/png" value="">
@@ -185,6 +185,13 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                             </div>
 
                         </div>
+
+                        <!-- Если подгрузилось имя картинки, значит предупредим пользователя, что картинка у этой записи уже существует -->
+                        <?php if (!empty($content['attimage'])) { ?>
+                            <?= '<div class="footer"><p class="small my-0">Изображение для этой записи уже задано, но вы можете заменить его, загрузив другой файл</p></div>' ?>
+                        <?php } ?>
+                        <!--------------------------------------------------------------------------------------------------------------->
+
                     </div>
                 </form>
             </div>

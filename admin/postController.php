@@ -18,17 +18,14 @@ require_once '..'.DS.'libphp'.DS.'db.class.php';
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $postcontroller = new PostController($db);
 
-//if file present we handle it - check for type, rename, move to website folder
-$postcontroller->uploadedFilesHandler($_FILES);
-
 //we expect GET parameters for routine user actions, such as open specified article for edit, reset draft etc...
 $postcontroller->routineHandler($_GET);
 
-//we expect POST parameters only when user submits new (or edited) article/record
-$postcontroller->existingEditedPostHandler($_POST);
+//we expect POST (and OPTIONALLY FILES) parameters only when user submits new (or edited) article/record
+$postcontroller->existingEditedPostHandler($_POST, $_FILES);
 
-//we expect POST parameters only when user submits new (or edited) article/record
-$postcontroller->newPostHandler($_POST);
+//we expect POST (and OPTIONALLY FILES) parameters only when user submits new (or edited) article/record
+$postcontroller->newPostHandler($_POST, $_FILES);
 
 //When all methods have done their job - we return back to Admin Panel
 header("Location: adminview.php");
