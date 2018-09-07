@@ -15,7 +15,9 @@ require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
 require_once '..'.DS.'libphp'.DS.'Image.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
 
+//TODO: move to separate config-file
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+
 $postcontroller = new PostController($db);
 
 //we expect GET parameters for routine user actions, such as open specified article for edit, reset draft etc...
@@ -26,6 +28,9 @@ $postcontroller->existingEditedPostHandler($_POST, $_FILES);
 
 //we expect POST (and OPTIONALLY FILES) parameters only when user submits new (or edited) article/record
 $postcontroller->newPostHandler($_POST, $_FILES);
+
+//And finally, catch errors and SAVE USER DATA if necessary:
+$postcontroller->errorHandler($_POST);
 
 //When all methods have done their job - we return back to Admin Panel
 header("Location: adminview.php");

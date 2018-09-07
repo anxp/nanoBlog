@@ -123,10 +123,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                     <input type="hidden" name="MAX_FILE_SIZE" value="2000000">
 
                     <!-- PHP Code Insertion -->
-                    <?php if($answerType === 'SUCCESS' && $message === 'Record/article loaded.') { ?>
-                    <!-- This hidden field is for article ID, requested for edit -->
-                    <input name="artid" type="hidden" value="<?= $artid ?>">
-                    <?php } ?>
+                    <input name="artid" type="hidden" value="<?= isset($content['artid']) ? $content['artid'] : '' ?>">
                     <!------------------------>
 
                     <div class="input-group" id="articleTopControls">
@@ -178,11 +175,15 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                         <div class="input-group clearfix" id="articleFooterControls">
 
                             <input type="file" class="custom-file" name="artimage" accept="image/jpeg,image/png" value="">
-                            <input id="keyWords" name="kwords" type="text" class="form-control-sm" style="width: 30%" placeholder="Ключевые слова (ч/з запятую)">
+
+                            <!-- PHP Code Insertion -->
+                            <!-- Если есть сохраненная строка с ключевыми словами - просто выводим ее -->
+                            <input value="<?= isset($content['kwords']) ? $content['kwords'] : '' ?>" id="keyWords" name="kwords" type="text" class="form-control-sm" style="width: 40%" placeholder="Keywords CSV (RegExp validation will apply)">
                             <div class="_middle mx-2 mt-1">
                                 <label for="defaultCheck1" style="vertical-align: baseline">Премиум-доступ:</label>
                                 <input id="defaultCheck1" type="checkbox" name="checkbox" value="">
                             </div>
+                            <!------------------------>
 
                         </div>
 
