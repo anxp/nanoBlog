@@ -6,17 +6,17 @@
  * Time: 7:55 PM
  */
 
-//This class implements Data Mapper pattern - intermediary between User Data and Article Object
 class PostController {
     private $db_conn;
     private $uploadedImageName;
+
+    //Error flags:
     private $keywordsSyntaxError = false;
     private $categoryError = false;
     private $titleError = false;
     private $bodyError = false;
 
     //RegExp to check keywords. Keywords can contain only letters, must be separated with [,] and can't start from special symbols, commas and spaces
-    //TODO: rewrite regexp to something more human-readable
     const REGEX_TEMPLATE = '/^[^%`^,\+\=\'\ ][^%`^\+\=\']{1,}[^%`^,\+\=\'\ ]$/u'; // u is for utf-8 encoding
 
     //TODO: move all these params to separate config file, so it will be more easily to deploy project on next-new server
@@ -34,21 +34,7 @@ class PostController {
         //We don't even try to handle 'as existing record' if $POST is empty (no record at all), so if $POST is empty -> return
         if (empty($POST)) {return;}
 
-
-        if (empty($POST['title'])) { //Check if user accidentally deleted title
-            $this->titleError = true;
-            return;
-        }
-
-        if (empty($POST['body'])) { //Check if user accidentally deleted body
-            $this->bodyError = true;
-            return;
-        }
-
-        if (!self::isKeywordsOK($POST['kwords'])) { //We also will not handle record if keywords string contains error
-            $this->keywordsSyntaxError = true;
-            return;
-        }
+        if (!$this->isInputDataOK($POST)) {return;} //Basic check input data - is it enough to continue
 
         //We proceed ONLY if isset $POST['artid'], - this is a sign of we deal with EDITED RECORD, not new!
         if ((isset($POST['artid']) && intval($POST['artid']) > 0)) {
@@ -82,25 +68,7 @@ class PostController {
         //OR POST[] contains element 'artid' (article ID), which means this is NOT A NEW RECORD, but edited existing!
         if (empty($POST) || !empty($POST['artid'])) {return;}
 
-        if (!is_numeric($POST['category'])) { //if category set correct...
-            $this->categoryError = true;
-            return;
-        }
-
-        if (empty($POST['title'])) {
-            $this->titleError = true;
-            return;
-        }
-
-        if (empty($POST['body'])) { //title and body also not empty....
-            $this->bodyError = true;
-            return;
-        }
-
-        if (!self::isKeywordsOK($POST['kwords'])) { //and keywords match syntax, let write article to Database...
-            $this->keywordsSyntaxError = true;
-            return;
-        }
+        if (!$this->isInputDataOK($POST)) {return;} //Basic check input data - is it enough to continue
 
         $attImage = ($this->uploadedFilesHandler($FILES)) ? ($this->uploadedImageName) : ''; //Name of uploaded image, if exists
 
@@ -208,6 +176,18 @@ class PostController {
 
     private static function isKeywordsOK($string) {
         if (empty($string) || preg_match(self::REGEX_TEMPLATE, $string) === 1) {return true;} else {return false;}
+    }
+
+    private function isInputDataOK($POST) {
+
+        $this->categoryError = (!is_numeric($POST['category'])) ? true : false;
+        $this->titleError = (empty($POST['title'])) ? true : false;
+        $this->bodyError = (empty($POST['body'])) ? true : false;
+        $this->keywordsSyntaxError = (!self::isKeywordsOK($POST['kwords'])) ? true : false;
+
+        if ($this->categoryError || $this->titleError || $this->bodyError || $this->keywordsSyntaxError) {
+            return false;
+        } else return true;
     }
 
     public static function resetDraft() {
