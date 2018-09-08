@@ -51,16 +51,16 @@ switch (true) {
 
 define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
-require_once '..'.DS.'libphp'.DS.'Pagination.Class.php';
+require_once '..'.DS.'libphp'.DS.'TableOfContents.Class.php';
 require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
 require_once '..'.DS.'libphp'.DS.'db.class.php';
 
 PostController::resetDraft(); //When all information loaded to corresponding variables, let's clean temporary storage
 
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
-$categoriesArr = Article::getCategories($db); //Load categories from DataBase to indexed array
+$categoriesArr = TableOfContents::getCategories($db); //Load categories from DataBase to indexed array
 
-$pagination = new Pagination($db);
+$pagination = new TableOfContents($db);
 $currentPageTOC = $pagination->getCurrentPageItems($_GET['page']); //TOC is Table Of Contents
 $totalPagesNum = $pagination->getTotalPagesNumber();
 ?>

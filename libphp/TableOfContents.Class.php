@@ -5,7 +5,7 @@
  * Date: 9/4/18
  * Time: 9:45 AM
  */
-class Pagination {
+class TableOfContents {
     private $itemsPerPage = 10; //default value is 10 records per page, but we can change it in changeNumItemsPerPage method
     private $totalPagesNumber;
     private $totalRecordsNumber; //number of records/articles in DB
@@ -39,6 +39,31 @@ class Pagination {
         }
 
         return $sqlResponse;
+    }
+
+    public static function getCategories(object $db_conn) {
+        $sql = "SELECT `cat_ID`, `cat_name` FROM `categories` WHERE 1;"; //this method hardcoded to get only categories from categories table
+        $sqlResponse = $db_conn->query($sql); //perform request to MySQL DB
+        $responseBody = array();
+        //SQL response is 2 or 3-levels nested array, so to get end values we need to dig in...
+        for ($i = 0; $i < count($sqlResponse); $i++) {
+            $responseBody[intval($sqlResponse[$i]['cat_ID'])] = $sqlResponse[$i]['cat_name']; //REALLY BLACK MAGIC...
+        }
+        return $responseBody; //return 1-dimensional array with categories such as 'sport', 'politics' etc...
+
+        //At the return we will have array like this:
+        /*
+        array(4) {
+            [4] =>
+            string(9) "Cпорт"
+            [1] =>
+            string(16) "Политика"
+            [3] =>
+            string(20) "Технологии"
+            [2] =>
+            string(18) "Экономика"
+        }
+        */
     }
 
     public function changeNumItemsPerPage($n) { //This is if we want change default value (10)

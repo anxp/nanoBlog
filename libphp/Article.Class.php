@@ -109,31 +109,6 @@ class Article {
         }
     }
 
-    public static function getCategories(object $db_conn) {
-        $sql = "SELECT `cat_ID`, `cat_name` FROM `categories` WHERE 1;"; //this method hardcoded to get only categories from categories table
-        $sqlResponse = $db_conn->query($sql); //perform request to MySQL DB
-        $responseBody = array();
-        //SQL response is 2 or 3-levels nested array, so to get end values we need to dig in...
-        for ($i = 0; $i < count($sqlResponse); $i++) {
-            $responseBody[intval($sqlResponse[$i]['cat_ID'])] = $sqlResponse[$i]['cat_name']; //REALLY BLACK MAGIC...
-        }
-        return $responseBody; //return 1-dimensional array with categories such as 'sport', 'politics' etc...
-
-        //At the return we will have array like this:
-        /*
-        array(4) {
-            [4] =>
-            string(9) "Cпорт"
-            [1] =>
-            string(16) "Политика"
-            [3] =>
-            string(20) "Технологии"
-            [2] =>
-            string(18) "Экономика"
-        }
-        */
-    }
-
     public static function cleanString($str) {
         $str = trim($str);
         $str = strip_tags($str);
