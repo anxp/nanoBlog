@@ -15,6 +15,7 @@ $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
 $TOC = new TableOfContents($db);
 $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to indexed array
+$keywords = json_decode($TOC->getAllKeywordsAsJSON());
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -109,7 +110,7 @@ $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to index
             <?php for ($i=1; $i<=count($categoriesArr); $i++) { ?>
                 <div class="border border-success mb-2">
                     <div class="categoryBlockHeader">
-                        <p class="h4"><?= $categoriesArr[$i] ?></p>
+                        <p class="h5"><?= $categoriesArr[$i] ?></p>
                     </div>
 
                     <div class="categoryBlockContent">
@@ -124,6 +125,17 @@ $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to index
 
         </div>
         <div class="col-md-3">
+            <div class="border border-success mb-2">
+                <div class="categoryBlockHeader">
+                    <p class="h5">Ключевые слова</p>
+                </div>
+
+                <div class="categoryBlockContent">
+                    <?php foreach ($keywords as $value) { ?>
+                        <span>[</span><?= $value ?><span>] </span>
+                    <?php } ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>

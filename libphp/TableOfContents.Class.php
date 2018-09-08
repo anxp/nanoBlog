@@ -100,6 +100,32 @@ class TableOfContents {
         return (!empty($responseBody) ? $responseBody : false);
     }
 
+    public function getAllKeywordsAsJSON() {
+        $sql = "SELECT `kwords` FROM `articles` WHERE `kwords` <> '';";
+        $sqlResponse = $this->db_conn->query($sql); //perform request to MySQL DB
+        $allKeywordsInOneString = '';
+
+        foreach ($sqlResponse as $value) {
+            $allKeywordsInOneString.=$value['kwords'].','; //Gather all fields in one string
+        }
+
+        $keywordsArray = explode(',', $allKeywordsInOneString); //Making array from string by [,]
+
+        $keywordsArrayFormatted = [];
+        foreach ($keywordsArray as $value) {
+            if(!empty(trim($value))) {
+                $value = mb_strtolower($value, 'UTF-8'); //Convert all words to lower case
+                $keywordsArrayFormatted[] = trim($value); //Let's trim spaces and delete empty values
+            }
+        }
+
+        $keywordsUniqArr = array_unique($keywordsArrayFormatted);
+        $keywordsJSON = json_encode($keywordsUniqArr);
+        if($keywordsJSON) {
+            return $keywordsJSON;
+        } else {return false;}
+    }
+
     public function changeNumItemsPerPage(int $n) { //This is if we want change default value (10)
         $this->itemsPerPage = $n;
     }

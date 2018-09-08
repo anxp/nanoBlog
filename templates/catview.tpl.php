@@ -44,7 +44,7 @@
             <!-- Вывод оглавления категории (список записей в этой категории) -->
             <div class="border border-success mb-2">
                 <div class="categoryBlockHeader">
-                    <p class="h4">Записи в разделе "<?= $catName ?>":</p>
+                    <p class="h5">Записи в разделе "<?= $catName ?>":</p>
                 </div>
 
                 <div class="categoryBlockContent">
@@ -89,6 +89,17 @@
 
         </div>
         <div class="col-md-3">
+            <div class="border border-success mb-2">
+                <div class="categoryBlockHeader">
+                    <p class="h5">Ключевые слова</p>
+                </div>
+
+                <div class="categoryBlockContent">
+                    <?php foreach ($keywords as $value) { ?>
+                        <span>[</span><?= $value ?><span>] </span>
+                    <?php } ?>
+                </div>
+            </div>
         </div>
     </div>
 

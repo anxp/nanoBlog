@@ -44,7 +44,7 @@
 
                 <div class="border border-success mb-2">
                     <div class="categoryBlockHeader">
-                        <p class="h4"><?= $title ?></p>
+                        <p class="h5"><?= $title ?></p>
                     </div>
 
                     <div style="display: block" class="m-2">
@@ -64,6 +64,17 @@
 
         </div>
         <div class="col-md-3">
+            <div class="border border-success mb-2">
+                <div class="categoryBlockHeader">
+                    <p class="h5">Ключевые слова</p>
+                </div>
+
+                <div class="categoryBlockContent">
+                    <?php foreach ($keywords as $value) { ?>
+                        <span>[</span><?= $value ?><span>] </span>
+                    <?php } ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
