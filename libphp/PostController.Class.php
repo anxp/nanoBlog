@@ -112,7 +112,7 @@ class PostController {
                 $_SESSION['content'] = json_encode($POST);
                 break;
             default:
-                echo 'Something really went wrong...';
+                echo 'No errors';
         }
         return; //Return back to calling code
     }

@@ -1,0 +1,44 @@
+.categoryBlockHeader
+{
+    clear: both;
+    position: relative;
+    top: 0;
+    width: 100%;
+    height: auto;
+    padding: 4px 10px;
+    text-align: left;
+    background-color: #28a745;
+    /*border-top:1px solid #bbb;*/
+    color: #fff;
+}
+
+.categoryBlockFooter
+{
+    clear: both;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    height: auto;
+    padding: 4px 10px;
+    text-align: left;
+    background-color: #28a745;
+    /*border-top:1px solid #bbb;*/
+    color: #fff;
+}
+
+.categoryBlockContent
+{
+    padding: 10px;
+}
+
+.categoryBlockContent > a:before {
+    content: "\2023";
+    color: red;
+}
+
+.leadimage
+{
+    width: 50%;
+    float: left;
+    margin-right: 10px;
+}

@@ -13,7 +13,7 @@ require_once 'safeEnvironmentInitialization.php';
 //2. Feature extension in future
 
 switch (true) {
-    case($_SESSION['answertype'] === 'ERROR'):
+    case(isset($_SESSION['answertype']) && $_SESSION['answertype'] === 'ERROR'):
         $answerType = $_SESSION['answertype'];
         $message = $_SESSION['message'];
 
@@ -22,7 +22,7 @@ switch (true) {
         $content = json_decode($_SESSION['content'], true);
         break;
         
-    case($_SESSION['answertype'] === 'SUCCESS' && $_SESSION['message'] === 'Record/article loaded.'):
+    case(isset($_SESSION['answertype']) && $_SESSION['answertype'] === 'SUCCESS' && isset($_SESSION['message']) && $_SESSION['message'] === 'Record/article loaded.'):
         $answerType = $_SESSION['answertype'];
         $message = $_SESSION['message'];
 
@@ -33,7 +33,7 @@ switch (true) {
         $artid = $content['artid'];
         break;
 
-    case($_SESSION['answertype'] === 'SUCCESS' && $_SESSION['message'] === 'Record/article updated to DB.'):
+    case(isset($_SESSION['answertype']) && $_SESSION['answertype'] === 'SUCCESS' && isset($_SESSION['message']) && $_SESSION['message'] === 'Record/article updated to DB.'):
         $answerType = $_SESSION['answertype'];
         $message = $_SESSION['message'];
 
@@ -57,11 +57,12 @@ require_once '..'.DS.'libphp'.DS.'db.class.php';
 
 PostController::resetDraft(); //When all information loaded to corresponding variables, let's clean temporary storage
 
+//TODO: move to separate config file and wrap into try-catch
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
-$categoriesArr = TableOfContents::getCategories($db); //Load categories from DataBase to indexed array
 
 $pagination = new TableOfContents($db);
-$currentPageTOC = $pagination->getCurrentPageItems($_GET['page']); //TOC is Table Of Contents
+$categoriesArr = $pagination->getCategories(); //Load categories from DataBase to indexed array
+$currentPageTOC = $pagination->getCurrentPageItems(isset($_GET['page']) ? $_GET['page'] : 0); //TOC is Table Of Contents
 $totalPagesNum = $pagination->getTotalPagesNumber();
 ?>
 <!DOCTYPE html>
@@ -157,8 +158,13 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                             <!-- Формируем меню опубликовано/черновик. Здесь мы также запоминаем какой пункт выбрал пользователь,
                             и при необходимости подставляем это значение. Но в данном случае все гораздо проще чем с категориями,
                             так как содержимое этого меню мы не подтягиваем с БД -->
-                            <option <?= (intval($content['status']) === 0 ? 'selected' : '') ?> value="0">Черновик</option>
-                            <option <?= (intval($content['status']) === 1 ? 'selected' : '') ?> value="1">Опубликовано</option>
+                            <?php if (isset($content['status'])) { ?>
+                                <option <?= (intval($content['status']) === 0 ? 'selected' : '') ?> value="0">Черновик</option>
+                                <option <?= (intval($content['status']) === 1 ? 'selected' : '') ?> value="1">Опубликовано</option>
+                            <?php } else { ?>
+                                <option selected value="0">Черновик</option>
+                                <option value="1">Опубликовано</option>
+                            <?php } ?>
                             <!------------------------>
 
                         </select>
@@ -204,7 +210,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
                         <a class="page-link" href="adminview.php?page=1">Первая</a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="adminview.php?page=<?= (intval($_GET['page'])-1) < 0 ? 0 : (intval($_GET['page'])-1) ?>">Предыдущая</a>
+                        <a class="page-link" href="adminview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) < 0 ? 0 : (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) ?>">Предыдущая</a>
                     </li>
                     <!------------------------------------------------------------------->
 
@@ -218,7 +224,7 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
 
                     <!-- Вывод конечного блока пагинации (кнопки Следующая и Последняя) -->
                     <li class="page-item">
-                        <a class="page-link" href="adminview.php?page=<?= (intval($_GET['page'])+1) <= $totalPagesNum ? (intval($_GET['page'])+1) : $totalPagesNum ?>">Следующая</a>
+                        <a class="page-link" href="adminview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) <= $totalPagesNum ? (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) : $totalPagesNum ?>">Следующая</a>
                     </li>
                     <li class="page-item">
                         <a class="page-link" href="adminview.php?page=<?= $totalPagesNum ?>">Последняя</a>
