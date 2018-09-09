@@ -10,12 +10,13 @@ define('DS', DIRECTORY_SEPARATOR);
 require_once '.'.DS.'libphp'.DS.'TableOfContents.Class.php';
 require_once '.'.DS.'libphp'.DS.'db.class.php';
 
-//TODO: move to separate config file
+//TODO: move to separate config file and wrap to try-catch
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
 $TOC = new TableOfContents($db);
 $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to indexed array
-$keywords = json_decode($TOC->getAllKeywordsAsJSON());
+$keywordsJSON = $TOC->getAllKeywordsAsJSON();
+$keywords = json_decode($keywordsJSON);
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -49,9 +50,14 @@ $keywords = json_decode($TOC->getAllKeywordsAsJSON());
                 </div>
 
                 <form class="form-inline">
-                    <input class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                    <div>
+                        <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                        <div id="searchDD" class="dropdown-content"></div>
+                    </div>
                     <button class="btn btn-outline-success btn-sm my-2 my-sm-0" type="submit">Но вдруг повезет :)</button>
+
                 </form>
+
             </nav>
 
         </div>
@@ -60,51 +66,6 @@ $keywords = json_decode($TOC->getAllKeywordsAsJSON());
         <div class="col-md-2">
         </div>
         <div class="col-md-7">
-            <div class="carousel slide" id="carousel-89849">
-                <ol class="carousel-indicators">
-                    <li data-slide-to="0" data-target="#carousel-89849">
-                    </li>
-                    <li data-slide-to="1" data-target="#carousel-89849">
-                    </li>
-                    <li data-slide-to="2" data-target="#carousel-89849" class="active">
-                    </li>
-                </ol>
-                <div class="carousel-inner">
-                    <div class="carousel-item">
-                        <img class="d-block w-100" alt="Carousel Bootstrap First" src="https://www.layoutit.com/img/sports-q-c-1600-500-1.jpg">
-                        <div class="carousel-caption">
-                            <h4>
-                                First Thumbnail label
-                            </h4>
-                            <p>
-                                Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <img class="d-block w-100" alt="Carousel Bootstrap Second" src="https://www.layoutit.com/img/sports-q-c-1600-500-2.jpg">
-                        <div class="carousel-caption">
-                            <h4>
-                                Second Thumbnail label
-                            </h4>
-                            <p>
-                                Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
-                            </p>
-                        </div>
-                    </div>
-                    <div class="carousel-item active">
-                        <img class="d-block w-100" alt="Carousel Bootstrap Third" src="https://www.layoutit.com/img/sports-q-c-1600-500-3.jpg">
-                        <div class="carousel-caption">
-                            <h4>
-                                Third Thumbnail label
-                            </h4>
-                            <p>
-                                Cras justo odio, dapibus ac facilisis in, egestas eget quam. Donec id elit non mi porta gravida at eget metus. Nullam id dolor id nibh ultricies vehicula ut id elit.
-                            </p>
-                        </div>
-                    </div>
-                </div> <a class="carousel-control-prev" href="#carousel-89849" data-slide="prev"><span class="carousel-control-prev-icon"></span> <span class="sr-only">Previous</span></a> <a class="carousel-control-next" href="#carousel-89849" data-slide="next"><span class="carousel-control-next-icon"></span> <span class="sr-only">Next</span></a>
-            </div>
 
             <!-- Начало вывода блоков категорий -->
             <?php for ($i=1; $i<=count($categoriesArr); $i++) { ?>
@@ -132,16 +93,14 @@ $keywords = json_decode($TOC->getAllKeywordsAsJSON());
 
                 <div class="categoryBlockContent">
                     <?php foreach ($keywords as $value) { ?>
-                        <span>[</span><?= $value ?><span>] </span>
+                        <span>#</span><?= $value ?>
                     <?php } ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/scripts.js"></script>
+<SURPRISETAG style="display: none" id="hiddenJSON"><?= $keywordsJSON ?></SURPRISETAG>
+<script src="./libjs/livetagsearch.js"></script>
 </body>
 </html>

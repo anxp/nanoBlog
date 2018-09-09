@@ -29,7 +29,10 @@
                 </div>
 
                 <form class="form-inline">
-                    <input class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                    <div>
+                        <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                        <div id="searchDD" class="dropdown-content"></div>
+                    </div>
                     <button class="btn btn-outline-success btn-sm my-2 my-sm-0" type="submit">Но вдруг повезет :)</button>
                 </form>
             </nav>
@@ -64,23 +67,11 @@
 
         </div>
         <div class="col-md-3">
-            <div class="border border-success mb-2">
-                <div class="categoryBlockHeader">
-                    <p class="h5">Ключевые слова</p>
-                </div>
-
-                <div class="categoryBlockContent">
-                    <?php foreach ($keywords as $value) { ?>
-                        <span>[</span><?= $value ?><span>] </span>
-                    <?php } ?>
-                </div>
-            </div>
+            <?php include '.'.DS.'templates'.DS.'keywordsblock.tpl.php'; ?>
         </div>
     </div>
 </div>
-
-<script src="js/jquery.min.js"></script>
-<script src="js/bootstrap.min.js"></script>
-<script src="js/scripts.js"></script>
+<SURPRISETAG style="display: none" id="hiddenJSON"><?= $keywordsJSON ?></SURPRISETAG>
+<script src="./libjs/livetagsearch.js"></script>
 </body>
 </html>

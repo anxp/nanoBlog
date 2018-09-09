@@ -14,8 +14,10 @@ require_once '.'.DS.'libphp'.DS.'db.class.php';
 
 $db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $TOC = new TableOfContents($db);
+$TOC->changeNumItemsPerPage(5);
 $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to indexed array
-$keywords = json_decode($TOC->getAllKeywordsAsJSON());
+$keywordsJSON = $TOC->getAllKeywordsAsJSON();
+$keywords = json_decode($keywordsJSON);
 
 switch (true) {
     case(isset($_GET['record']) && is_numeric(intval($_GET['record']))):

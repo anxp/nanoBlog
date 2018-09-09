@@ -120,7 +120,8 @@ class TableOfContents {
         }
 
         $keywordsUniqArr = array_unique($keywordsArrayFormatted);
-        $keywordsJSON = json_encode($keywordsUniqArr);
+        $keywordsUniqArrIndexed = array_values($keywordsUniqArr);
+        $keywordsJSON = json_encode($keywordsUniqArrIndexed);
         if($keywordsJSON) {
             return $keywordsJSON;
         } else {return false;}
