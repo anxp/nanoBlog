@@ -5,7 +5,7 @@
 
     <div class="categoryBlockContent">
         <?php foreach ($keywords as $value) { ?>
-            <span>#</span><?= $value ?>
+            <a class="text-danger" href="contentview.php?keywordsearch=<?= $value ?>"><?= $value ?></a>
         <?php } ?>
     </div>
 </div>

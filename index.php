@@ -49,9 +49,9 @@ $keywords = json_decode($keywordsJSON);
                     </ul>
                 </div>
 
-                <form class="form-inline">
+                <form class="form-inline" method="get" action="contentview.php">
                     <div>
-                        <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                        <input id="searchField" class="form-control-sm mr-sm-2" autocomplete="off" type="text" placeholder="Не лучше чем Google..." aria-label="Search" name="keywordsearch">
                         <div id="searchDD" class="dropdown-content"></div>
                     </div>
                     <button class="btn btn-outline-success btn-sm my-2 my-sm-0" type="submit">Но вдруг повезет :)</button>
@@ -86,17 +86,7 @@ $keywords = json_decode($keywordsJSON);
 
         </div>
         <div class="col-md-3">
-            <div class="border border-success mb-2">
-                <div class="categoryBlockHeader">
-                    <p class="h5">Ключевые слова</p>
-                </div>
-
-                <div class="categoryBlockContent">
-                    <?php foreach ($keywords as $value) { ?>
-                        <span>#</span><?= $value ?>
-                    <?php } ?>
-                </div>
-            </div>
+            <?php include '.'.DS.'templates'.DS.'keywordsblock.tpl.php'; ?>
         </div>
     </div>
 </div>

@@ -28,9 +28,9 @@
                     </ul>
                 </div>
 
-                <form class="form-inline">
+                <form class="form-inline" method="get" action="contentview.php">
                     <div>
-                        <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search">
+                        <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search" name="keywordsearch">
                         <div id="searchDD" class="dropdown-content"></div>
                     </div>
                     <button class="btn btn-outline-success btn-sm my-2 my-sm-0" type="submit">Но вдруг повезет :)</button>

@@ -15,7 +15,7 @@ class TableOfContents {
 
     }
 
-    public function getCurrentPageItems($pageNo, int $catID = 0, $associative=false) { //Get list of items for specified page. Pages numeration starts from 1
+    public function getCurrentPageItems($pageNo, int $catID = 0, $kWord = null, $associative=false) { //Get list of items for specified page. Pages numeration starts from 1
         if ($pageNo == 0 || $pageNo == null) { //because we will put $_GET['pageNo'] here so it need be sure that PageNo = 1 if this parameter missing or is 0
             $pageNo = 1;
         } else {
@@ -27,11 +27,15 @@ class TableOfContents {
         //$catID is optional parameter. If catID=0, this method gets records from whole table, paginate them and returns by pages
         //if catID!=0 it returns records only from specified Category
 
+        if($kWord) {$kWord='%'.$kWord.'%';} //for LIKE search in DB
+
         if($catID === 0) {
-            $sql = "SELECT COUNT(*) FROM articles;";
+            $sql = ($kWord == null) ? "SELECT COUNT(*) FROM `articles`;" : "SELECT COUNT(*) FROM `articles` WHERE `kwords` LIKE '{$kWord}';";
         } elseif ($catID > 0) {
-            $sql = "SELECT COUNT(*) FROM articles WHERE category = {$catID};";
+            $sql = ($kWord == null) ? "SELECT COUNT(*) FROM articles WHERE category = {$catID};" : "SELECT COUNT(*) FROM articles WHERE category = {$catID} AND `kwords` LIKE '{$kWord}';";
         } else {return false;}
+
+        //$sql = $this->db_conn->escape($sql);
 
         $totalRecordsDirty = $this->db_conn->query($sql); //We'll got not just number of records, but 2-levels nested array in SQL response, so to get just number of records we need additional cleaning
         $totalRecordsClean = intval(reset($totalRecordsDirty[0])); //and now, in $totalRecordsClean is CLEANED INTEGER VALUE == number of records in DB
@@ -39,10 +43,12 @@ class TableOfContents {
         $this->totalPagesNumber = ceil($this->totalRecordsNumber/$this->itemsPerPage); //How many pages will be, based on total amount of records and number of records per page
 
         if($catID === 0) {
-            $sql = "SELECT `art_ID`, `is_published`, `title` FROM `articles` ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
+            $sql = ($kWord == null) ? "SELECT `art_ID`, `is_published`, `title` FROM `articles` ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};" : "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `kwords` LIKE '{$kWord}' ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
         } else {
-            $sql = "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = {$catID} ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
+            $sql = ($kWord == null) ? "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = {$catID} ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};" : "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = {$catID} AND `kwords` LIKE '{$kWord}' ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
         }
+
+        //$sql = $this->db_conn->escape($sql);
 
         $sqlResponse = $this->db_conn->query($sql); //$sqlResponse contains 2-dim array with: [articleID, articleStatus (published or not) and articleTitle] X10
 

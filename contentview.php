@@ -47,6 +47,16 @@ switch (true) {
             break;
         }
 
+    case(isset($_GET['keywordsearch'])):
+        $requestedKeyword = $_GET['keywordsearch'];
+        $pageNo = isset($_GET['page']) ? intval($_GET['page']) : 0;
+        if($itemsByKeyword = $TOC->getCurrentPageItems($pageNo, 0, $requestedKeyword)) {
+            $totalPagesNum = $TOC->getTotalPagesNumber();
+
+            include '.'.DS.'templates'.DS.'keywordview.tpl.php';
+            break;
+        }
+
     default:
         echo '404 :(';
 }

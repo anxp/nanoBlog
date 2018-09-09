@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>nanoBlog: <?= $catName ?></title>
+    <title>nanoBlog: <?= $requestedKeyword ?></title>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <link rel="stylesheet" href="./styles/nanoblog-green.css">
@@ -21,14 +21,14 @@
                 <div class="collapse navbar-collapse" id="navbarText">
                     <ul class="navbar-nav mr-auto">
                         <?php foreach ($categoriesArr as $key => $value) { ?>
-                            <li class="nav-item <?= ($key == $_GET['cat']) ? 'active' : '' ?>">
+                            <li class="nav-item active">
                                 <a class="nav-link" href="contentview.php?cat=<?= $key ?>"><?= $value ?></a>
                             </li>
                         <?php } ?>
                     </ul>
                 </div>
 
-                <form class="form-inline" action="contentview.php" method="get">
+                <form class="form-inline" method="get" action="contentview.php">
                     <div>
                         <input id="searchField" class="form-control-sm mr-sm-2" type="search" placeholder="Не лучше чем Google..." aria-label="Search" name="keywordsearch">
                         <div id="searchDD" class="dropdown-content"></div>
@@ -47,12 +47,12 @@
             <!-- Вывод оглавления категории (список записей в этой категории) -->
             <div class="border border-success mb-2">
                 <div class="categoryBlockHeader">
-                    <p class="h5">Записи в разделе "<?= $catName ?>":</p>
+                    <p class="h5">Результат поиска по ключевому слову: "<?= $requestedKeyword ?>":</p>
                 </div>
 
                 <div class="categoryBlockContent">
-                    <?php for ($i=0; $i<count($itemsInCategory); $i++) { ?>
-                        <a class="text-dark" href="contentview.php?record=<?= $itemsInCategory[$i][0] ?>"><?= $itemsInCategory[$i][2] ?></a><br>
+                    <?php for ($i=0; $i<count($itemsByKeyword); $i++) { ?>
+                        <a class="text-dark" href="contentview.php?record=<?= $itemsByKeyword[$i][0] ?>"><?= $itemsByKeyword[$i][2] ?></a><br>
                     <?php } ?>
                 </div>
             </div>
@@ -63,27 +63,27 @@
                     <ul class="pagination">
                         <!-- Вывод начального блока пагинации (кнопки Предыдущая и Первая) -->
                         <li class="page-item">
-                            <a class="page-link text-success" href="contentview.php?page=1&cat=<?= $requestedCatID ?>">Первая</a>
+                            <a class="page-link text-success" href="contentview.php?page=1&keywordsearch=<?= isset($_GET['keywordsearch']) ? $_GET['keywordsearch'] : null ?>">Первая</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link text-success" href="contentview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) < 0 ? 0 : (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) ?>&cat=<?= $requestedCatID ?>">Предыдущая</a>
+                            <a class="page-link text-success" href="contentview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) < 0 ? 0 : (intval(isset($_GET['page']) ? $_GET['page'] : 0)-1) ?>&keywordsearch=<?= isset($_GET['keywordsearch']) ? $_GET['keywordsearch'] : null ?>">Предыдущая</a>
                         </li>
                         <!------------------------------------------------------------------->
 
                         <!-- Вывод центрального блока пагинации (цифры) -->
                         <?php for($i=1; $i<=$totalPagesNum; $i++): ?>
                             <li class="page-item">
-                                <a class="page-link text-success" href="contentview.php?page=<?= $i ?>&cat=<?= $requestedCatID ?>"><?= $i ?></a>
+                                <a class="page-link text-success" href="contentview.php?page=<?= $i ?>&keywordsearch=<?= isset($_GET['keywordsearch']) ? $_GET['keywordsearch'] : null ?>"><?= $i ?></a>
                             </li>
                         <?php endfor; ?>
                         <!------------------------------------------------>
 
                         <!-- Вывод конечного блока пагинации (кнопки Следующая и Последняя) -->
                         <li class="page-item">
-                            <a class="page-link text-success" href="contentview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) <= $totalPagesNum ? (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) : $totalPagesNum ?>&cat=<?= $requestedCatID ?>">Следующая</a>
+                            <a class="page-link text-success" href="contentview.php?page=<?= (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) <= $totalPagesNum ? (intval(isset($_GET['page']) ? $_GET['page'] : 0)+1) : $totalPagesNum ?>&keywordsearch=<?= isset($_GET['keywordsearch']) ? $_GET['keywordsearch'] : null ?>">Следующая</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link text-success" href="contentview.php?page=<?= $totalPagesNum ?>&cat=<?= $requestedCatID ?>">Последняя</a>
+                            <a class="page-link text-success" href="contentview.php?page=<?= $totalPagesNum ?>&keywordsearch=<?= isset($_GET['keywordsearch']) ? $_GET['keywordsearch'] : null ?>">Последняя</a>
                         </li>
                         <!-------------------------------------------------------------------->
                     </ul>
