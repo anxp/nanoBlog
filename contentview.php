@@ -10,9 +10,9 @@ define('IMGPATH', '.'.DS.'img'.DS);
 
 require_once '.'.DS.'libphp'.DS.'TableOfContents.Class.php';
 require_once '.'.DS.'libphp'.DS.'Article.Class.php';
-require_once '.'.DS.'libphp'.DS.'db.class.php';
+require_once '.'.DS.'libphp'.DS.'simplePDO.Class.php';
 
-$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$db = new simplePDO('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 $TOC = new TableOfContents($db);
 $TOC->changeNumItemsPerPage(5);
 $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to indexed array
@@ -39,7 +39,7 @@ switch (true) {
     case(isset($_GET['cat']) && is_numeric(intval($_GET['cat']))):
         $requestedCatID = intval($_GET['cat']);
         $pageNo = isset($_GET['page']) ? intval($_GET['page']) : 0;
-        if($itemsInCategory = $TOC->getCurrentPageItems($pageNo, $requestedCatID)) {
+        if($itemsInCategory = $TOC->getRecordsForWorld($pageNo, $requestedCatID)) { //$itemsInCategory -- is PDOStatement Object
             $catName = $TOC->getCategoryNameByID($requestedCatID);
             $totalPagesNum = $TOC->getTotalPagesNumber();
 
@@ -50,7 +50,7 @@ switch (true) {
     case(isset($_GET['keywordsearch'])):
         $requestedKeyword = $_GET['keywordsearch'];
         $pageNo = isset($_GET['page']) ? intval($_GET['page']) : 0;
-        if($itemsByKeyword = $TOC->getCurrentPageItems($pageNo, 0, $requestedKeyword)) {
+        if($itemsByKeyword = $TOC->getRecordsForWorld($pageNo, 0, $requestedKeyword)) {
             $totalPagesNum = $TOC->getTotalPagesNumber();
 
             include '.'.DS.'templates'.DS.'keywordview.tpl.php';
@@ -60,5 +60,3 @@ switch (true) {
     default:
         echo '404 :(';
 }
-
-//include 'keywordsview.tpl.php';

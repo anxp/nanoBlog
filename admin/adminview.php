@@ -53,16 +53,17 @@ define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
 require_once '..'.DS.'libphp'.DS.'TableOfContents.Class.php';
 require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
-require_once '..'.DS.'libphp'.DS.'db.class.php';
+require_once '..'.DS.'libphp'.DS.'simplePDO.Class.php';
 
 PostController::resetDraft(); //When all information loaded to corresponding variables, let's clean temporary storage
 
 //TODO: move to separate config file and wrap into try-catch
-$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$db = new simplePDO('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
 $pagination = new TableOfContents($db);
 $categoriesArr = $pagination->getCategories(); //Load categories from DataBase to indexed array
-$currentPageTOC = $pagination->getCurrentPageItems(isset($_GET['page']) ? $_GET['page'] : 0); //TOC is Table Of Contents
+//TOC is Table Of Contents, we load id, is_published and title in PDOStatement Object
+$currentPageTOC =  $pagination->getRecordsForAdminPanel(isset($_GET['page']) ? $_GET['page'] : 0);
 $totalPagesNum = $pagination->getTotalPagesNumber();
 ?>
 <!DOCTYPE html>
@@ -236,9 +237,9 @@ $totalPagesNum = $pagination->getTotalPagesNumber();
             <div class="border border-secondary p-2">
                 <!-- PHP Code Insertion -->
                 <!-- Вывод 10 записей согласно id страницы. Записи выводятся в обратной сортировке - сначала более новые -->
-                <?php for($i=0; $i<count($currentPageTOC); $i++): ?>
-                    <a href="postController.php?edit=<?= $currentPageTOC[$i][0] ?>" class="<?= (intval($currentPageTOC[$i][1])===0) ? 'text-danger' : 'text-success' ?>"><?= $status=(intval($currentPageTOC[$i][1])===0) ? '[DRFT]' : '[PUBL]' ?><?= '['.$currentPageTOC[$i][0].'] '.$currentPageTOC[$i][2] ?></a><br>
-                <?php endfor; ?>
+                <?php while ($row = $currentPageTOC->fetch(PDO::FETCH_LAZY)) { ?>
+                    <a href="postController.php?edit=<?= $row['art_ID'] ?>" class="<?= (intval($row['is_published'])===0) ? 'text-danger' : 'text-success' ?>"><?= (intval($row['is_published'])===0) ? '[DRFT]' : '[PUBL]' ?><?= '['.$row['art_ID'].'] '.$row['title'] ?></a><br>
+                <?php } ?>
                 <!------------------------>
             </div>
         </div>

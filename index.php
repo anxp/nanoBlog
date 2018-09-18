@@ -8,10 +8,10 @@
 //TODO: refactor to Class Autoload
 define('DS', DIRECTORY_SEPARATOR);
 require_once '.'.DS.'libphp'.DS.'TableOfContents.Class.php';
-require_once '.'.DS.'libphp'.DS.'db.class.php';
+require_once '.'.DS.'libphp'.DS.'simplePDO.Class.php';
 
 //TODO: move to separate config file and wrap to try-catch
-$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$db = new simplePDO('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
 $TOC = new TableOfContents($db);
 $categoriesArr = $TOC->getCategories(); //Load categories from DataBase to indexed array
@@ -75,10 +75,10 @@ $keywords = json_decode($keywordsJSON);
                     </div>
 
                     <div class="categoryBlockContent">
-                        <?php $recordsList = $TOC->getLatestRecordsByCategory($i)?>
-
-                        <?php foreach ($recordsList as $key => $value) { ?>
-                            <a class="text-dark" href="contentview.php?record=<?= $key ?>"><?= $value ?></a><br>
+                        <?php $TOC->changeNumItemsPerPage(5); ?>
+                        <?php $stmt = $TOC->getRecordsForWorld(1, $i); ?>
+                        <?php while ($row = $stmt->fetch(PDO::FETCH_LAZY)) { ?>
+                            <a class="text-dark" href="contentview.php?record=<?= $row['art_ID'] ?>"><?= $row['title'] ?></a><br>
                         <?php } ?>
                     </div>
                 </div>

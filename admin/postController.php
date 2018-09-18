@@ -13,10 +13,10 @@ define('DS', DIRECTORY_SEPARATOR);
 require_once '..'.DS.'libphp'.DS.'Article.Class.php';
 require_once '..'.DS.'libphp'.DS.'PostController.Class.php';
 require_once '..'.DS.'libphp'.DS.'Image.Class.php';
-require_once '..'.DS.'libphp'.DS.'db.class.php';
+require_once '..'.DS.'libphp'.DS.'simplePDO.Class.php';
 
 //TODO: move to separate config-file
-$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$db = new simplePDO('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
 $postcontroller = new PostController($db);
 

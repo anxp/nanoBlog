@@ -51,8 +51,8 @@
                 </div>
 
                 <div class="categoryBlockContent">
-                    <?php for ($i=0; $i<count($itemsInCategory); $i++) { ?>
-                        <a class="text-dark" href="contentview.php?record=<?= $itemsInCategory[$i][0] ?>"><?= $itemsInCategory[$i][2] ?></a><br>
+                    <?php while ($row = $itemsInCategory->fetch(PDO::FETCH_LAZY)) { ?>
+                        <a class="text-dark" href="contentview.php?record=<?= $row['art_ID'] ?>"><?= $row['title'] ?></a><br>
                     <?php } ?>
                 </div>
             </div>

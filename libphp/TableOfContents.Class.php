@@ -7,16 +7,48 @@
  */
 class TableOfContents {
     private $itemsPerPage = 10; //default value is 10 records per page, but we can change it in changeNumItemsPerPage method
-    private $totalPagesNumber = 0;
-    private $totalRecordsNumber; //number of records/articles in DB
+    private $pagesNumber = 0; //number of pages for pagination based on all DB records OR (if requested) per-category
+    private $recordsNumber; //number of records/articles in whole DB OR per-category
     private $db_conn;
 
-    public function getAllItems() { //Get ALL records from DB
+    //This method returns records for Admin Panel - PUBLUSHED AND DRAFTS! Records can also be returned by-category, if specified
+    public function getRecordsForAdminPanel($pageNo, int $catID = 0, $associative=false) {
+        if (intval($pageNo) === 0) { //because we will put $_GET['pageNo'] here so it need be sure that PageNo = 1 if this parameter missing or is 0
+            $pageNo = 1;
+        } else {
+            $pageNo = intval($pageNo); //again, $pageNo is $_GET parameter, so it can be anything here, so it's better to filter this value
+        }
 
+        $offset = ($pageNo-1)*$this->itemsPerPage; //offset calculation for pagination
+
+        //----- Prepared statements for Admin Panel to get:
+        // 1) Number of ALL records in DB; 2) Number of records in category;
+        // 3) Titles of ALL but for specified Page; 4) Titles of by_CATEGORY but for specified Page.
+        $queryNumOfRec_ALL = "SELECT COUNT(*) FROM `articles`;";
+        $queryNumOfRec_byCAT = "SELECT COUNT(*) FROM articles WHERE category = ?;";
+        $queryRecords_byPAGE = "SELECT `art_ID`, `is_published`, `title` FROM `articles` ORDER BY `art_ID` DESC LIMIT ?, ?;";
+        $queryRecords_byPAGEbyCAT = "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = ? ORDER BY `art_ID` DESC LIMIT ?, ?;";
+
+        //$catID is optional parameter. If catID=0, this method gets records from whole table, paginate them and returns by pages
+        //if catID!=0 it returns records only from specified Category
+        if($catID === 0) {
+            $numOfRecords = $this->db_conn->run($queryNumOfRec_ALL)->fetchColumn();
+            $stmt = $this->db_conn->run($queryRecords_byPAGE, [$offset, $this->itemsPerPage]);
+        } elseif($catID > 0) {
+            $numOfRecords = $this->db_conn->run($queryNumOfRec_byCAT, [$catID])->fetchColumn();
+            $stmt = $this->db_conn->run($queryRecords_byPAGEbyCAT, [$catID, $offset, $this->itemsPerPage]);
+        } else {return false;}
+
+
+        $this->recordsNumber = $numOfRecords;
+        $this->pagesNumber = ceil($this->recordsNumber/$this->itemsPerPage); //How many pages will be, based on total amount of records (whole OR per-category, if requested) and number of records per page
+
+        return $stmt; //We return PDOStatement Object
     }
 
-    public function getCurrentPageItems($pageNo, int $catID = 0, $kWord = null, $associative=false) { //Get list of items for specified page. Pages numeration starts from 1
-        if ($pageNo == 0 || $pageNo == null) { //because we will put $_GET['pageNo'] here so it need be sure that PageNo = 1 if this parameter missing or is 0
+    //This method returns ONLY PUBLISHED records - for display on public-access pages
+    public function getRecordsForWorld($pageNo, int $catID = 0, $kWord = null) { //Get list of items for specified page, category, and keyword. Pages numeration starts from 1
+        if (intval($pageNo) === 0) { //because we will put $_GET['pageNo'] here so it need be sure that PageNo = 1 if this parameter missing or is 0
             $pageNo = 1;
         } else {
             $pageNo = intval($pageNo); //again, $pageNo is $_GET parameter, so it can be anything here, so it's better to filter this value
@@ -24,95 +56,79 @@ class TableOfContents {
 
         $offset = ($pageNo-1)*$this->itemsPerPage;
 
-        //$catID is optional parameter. If catID=0, this method gets records from whole table, paginate them and returns by pages
-        //if catID!=0 it returns records only from specified Category
+        if($kWord) {$kWord = "%{$kWord}%";} //for LIKE search in DB
 
-        if($kWord) {$kWord='%'.$kWord.'%';} //for LIKE search in DB
+        //----- Prepared statements for Number Of Records with different conditions:
+        $queryNumOfPublished_ALL = "SELECT COUNT(*) FROM `articles` WHERE `is_published` = 1;";
+        $queryNumOfPublished_wKEYWORD = "SELECT COUNT(*) FROM `articles` WHERE `is_published` = 1 AND `kwords` LIKE ?;";
+        $queryNumOfPublished_byCAT = "SELECT COUNT(*) FROM `articles` WHERE `is_published` = 1 AND `category` = ?;";
+        $queryNumOfPublished_byCATwKEYWORD = "SELECT COUNT(*) FROM `articles` WHERE `is_published` = 1 AND `category` = ? AND `kwords` LIKE ?;";
 
-        if($catID === 0) {
-            $sql = ($kWord == null) ? "SELECT COUNT(*) FROM `articles`;" : "SELECT COUNT(*) FROM `articles` WHERE `kwords` LIKE '{$kWord}';";
-        } elseif ($catID > 0) {
-            $sql = ($kWord == null) ? "SELECT COUNT(*) FROM articles WHERE category = {$catID};" : "SELECT COUNT(*) FROM articles WHERE category = {$catID} AND `kwords` LIKE '{$kWord}';";
-        } else {return false;}
+        //----- Prepared statements for Get Titles of Articles with different conditions:
+        $queryRecords_byPAGE = "SELECT `art_ID`, `title` FROM `articles` WHERE `is_published` = 1 ORDER BY `art_ID` DESC LIMIT ?, ?;";
+        $queryRecords_byPAGEwKEYWORD = "SELECT `art_ID`, `title` FROM `articles` WHERE `is_published` = 1 AND `kwords` LIKE ? ORDER BY `art_ID` DESC LIMIT ?, ?;";
+        $queryRecords_byPAGEbyCAT = "SELECT `art_ID`, `title` FROM `articles` WHERE `is_published` = 1 AND `category` = ? ORDER BY `art_ID` DESC LIMIT ?, ?;";
+        $queryRecords_byPAGEbyCATwKEYWORD = "SELECT `art_ID`, `title` FROM `articles` WHERE `is_published` = 1 AND `category` = ? AND `kwords` LIKE ? ORDER BY `art_ID` DESC LIMIT ?, ?;";
 
-        //$sql = $this->db_conn->escape($sql);
 
-        $totalRecordsDirty = $this->db_conn->query($sql); //We'll got not just number of records, but 2-levels nested array in SQL response, so to get just number of records we need additional cleaning
-        $totalRecordsClean = intval(reset($totalRecordsDirty[0])); //and now, in $totalRecordsClean is CLEANED INTEGER VALUE == number of records in DB
-        $this->totalRecordsNumber = $totalRecordsClean;
-        $this->totalPagesNumber = ceil($this->totalRecordsNumber/$this->itemsPerPage); //How many pages will be, based on total amount of records and number of records per page
+        switch(true) {
+            case($catID === 0 && $kWord === null):
+                $numOfRecords = $this->db_conn->run($queryNumOfPublished_ALL)->fetchColumn();
+                $stmt = $this->db_conn->run($queryRecords_byPAGE, [$offset, $this->itemsPerPage]);
+                break;
 
-        if($catID === 0) {
-            $sql = ($kWord == null) ? "SELECT `art_ID`, `is_published`, `title` FROM `articles` ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};" : "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `kwords` LIKE '{$kWord}' ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
-        } else {
-            $sql = ($kWord == null) ? "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = {$catID} ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};" : "SELECT `art_ID`, `is_published`, `title` FROM `articles` WHERE `category` = {$catID} AND `kwords` LIKE '{$kWord}' ORDER BY `art_ID` DESC LIMIT {$offset}, {$this->itemsPerPage};";
+            case($catID === 0 && $kWord !== null):
+                $numOfRecords = $this->db_conn->run($queryNumOfPublished_wKEYWORD, [$kWord])->fetchColumn();
+                $stmt = $this->db_conn->run($queryRecords_byPAGEwKEYWORD, [$kWord, $offset, $this->itemsPerPage]);
+                break;
+
+            case($catID > 0 && $kWord === null):
+                $numOfRecords = $this->db_conn->run($queryNumOfPublished_byCAT, [$catID])->fetchColumn();
+                $stmt = $this->db_conn->run($queryRecords_byPAGEbyCAT, [$catID, $offset, $this->itemsPerPage]);
+                break;
+
+            case($catID > 0 && $kWord !== null):
+                $numOfRecords = $this->db_conn->run($queryNumOfPublished_byCATwKEYWORD, [$catID, $kWord])->fetchColumn();
+                $stmt = $this->db_conn->run($queryRecords_byPAGEbyCATwKEYWORD, [$catID, $kWord, $offset, $this->itemsPerPage]);
+                break;
+
+            default:
+                return false;
         }
 
-        //$sql = $this->db_conn->escape($sql);
+        $this->recordsNumber = $numOfRecords;
+        $this->pagesNumber = ceil($this->recordsNumber/$this->itemsPerPage); //How many pages will be, based on total amount of records and number of records per page
 
-        $sqlResponse = $this->db_conn->query($sql); //$sqlResponse contains 2-dim array with: [articleID, articleStatus (published or not) and articleTitle] X10
-
-        if(!$associative) { //USUALLY WE WANT indexed array as response from DB instead of associative
-            foreach ($sqlResponse as &$item) {
-                $item = array_values($item); //if we don't want associative array, lets reset in to indexed
-            }
-        }
-
-        return $sqlResponse;
+        return $stmt;
     }
 
     public function getCategories() {
-        $sql = "SELECT `cat_ID`, `cat_name` FROM `categories` WHERE 1;"; //this method hardcoded to get only categories from categories table
-        $sqlResponse = $this->db_conn->query($sql); //perform request to MySQL DB
-        $responseBody = array();
-        //SQL response is 2 or 3-levels nested array, so to get end values we need to dig in...
-        for ($i = 0; $i < count($sqlResponse); $i++) {
-            $responseBody[intval($sqlResponse[$i]['cat_ID'])] = $sqlResponse[$i]['cat_name']; //REALLY BLACK MAGIC...
-        }
-        return $responseBody; //return 1-dimensional array with categories such as 'sport', 'politics' etc...
+        $queryGetCategories = "SELECT `cat_ID`, `cat_name` FROM `categories` WHERE 1;";
+        $stmt = $this->db_conn->run($queryGetCategories); //This is object of class PDOStatement, we will do method "fetch" to extract data from it
 
-        //At the return we will have array like this:
-        /*
-        array(4) {
-            [4] =>
-            string(9) "Cпорт"
-            [1] =>
-            string(16) "Политика"
-            [3] =>
-            string(20) "Технологии"
-            [2] =>
-            string(18) "Экономика"
+        $assocArray = array();
+
+        while ($row = $stmt->fetch(PDO::FETCH_LAZY)) {
+            $assocArray[$row['cat_ID']] = $row['cat_name'];
         }
-        */
+
+        return $assocArray;
     }
 
     public function getCategoryNameByID(int $catID) {
-        $sql = "SELECT `cat_name` FROM `categories` WHERE `cat_ID` = {$catID};";
-        $sqlResponse = $this->db_conn->query($sql); //perform request to MySQL DB
-        $catName = $sqlResponse[0]['cat_name'];
+        $queryGetCategoryName = "SELECT `cat_name` FROM `categories` WHERE `cat_ID` = ?;";
+        $catName = $this->db_conn->run($queryGetCategoryName, [$catID])->fetchColumn();
         return $catName;
     }
 
-    //Method returns latest N PUBLISHED records of specified category, N by default = 5
-    public function getLatestRecordsByCategory(int $catID, $numberOfRec = 5) {
-        $sql = "SELECT `art_ID`, `title` FROM `articles` WHERE `category` = {$catID} AND `is_published` = 1 ORDER BY `art_ID` DESC LIMIT {$numberOfRec};";
-        $sqlResponse = $this->db_conn->query($sql); //perform request to MySQL DB
-        $responseBody = array();
-
-        for ($i=0; $i<count($sqlResponse); $i++) {
-            $responseBody[intval($sqlResponse[$i]['art_ID'])] = $sqlResponse[$i]['title'];
-        }
-
-        return (!empty($responseBody) ? $responseBody : false);
-    }
-
     public function getAllKeywordsAsJSON() {
-        $sql = "SELECT `kwords` FROM `articles` WHERE `kwords` <> '';";
-        $sqlResponse = $this->db_conn->query($sql); //perform request to MySQL DB
+        $queryGetAllKeywords = "SELECT `kwords` FROM `articles` WHERE `kwords` <> '';";
+        $stmt = $this->db_conn->run($queryGetAllKeywords);
+
         $allKeywordsInOneString = '';
 
-        foreach ($sqlResponse as $value) {
-            $allKeywordsInOneString.=$value['kwords'].','; //Gather all fields in one string
+        while ($row = $stmt->fetch(PDO::FETCH_LAZY)) {
+            $allKeywordsInOneString.=$row['kwords'].','; //Gather all fields in one string
         }
 
         $keywordsArray = explode(',', $allKeywordsInOneString); //Making array from string by [,]
@@ -146,7 +162,7 @@ class TableOfContents {
     }
 
     public function getTotalPagesNumber() {
-        return ($this->totalPagesNumber);
+        return ($this->pagesNumber);
     }
 
 }

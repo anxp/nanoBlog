@@ -8,7 +8,7 @@
 //ini_set('session.save_path', '/Users/andrey/Sites/sessions');
 
 define('DS', DIRECTORY_SEPARATOR);
-require_once '..'.DS.'libphp'.DS.'db.class.php';
+require_once '..'.DS.'libphp'.DS.'simplePDO.Class.php';
 
 function cleanString($str) {
     $str = trim($str);
@@ -39,13 +39,12 @@ if (isset($frontEndData['username']) && isset($frontEndData['userpass'])) {
 
 //Create new DB Connection
 //TODO: in this file, we only check account for existing, so for more secure, login to DataBase must be READ-ONLY
-$db = new DB('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
+$db = new simplePDO('essent.mysql.tools', 'essent_db', '2XxMUpHE', 'essent_db');
 
-$username = $db->escape($username);
-$userpass = $db->escape($userpass);
+$queryFindUser = "SELECT `user_ID`,`login`,`role` FROM users WHERE login = ? AND pass = ?;";
+$stmt = $db->run($queryFindUser, [$username, $userpass]);
 
-$sql = "SELECT `user_ID`,`login`,`role` FROM users WHERE login = '{$username}' AND pass = '{$userpass}';";
-$sqlResponse = $db->query($sql);
+$sqlResponse = $stmt->fetchAll();
 
 if(empty($sqlResponse)) {
     //if $sqlResponse contains empty array, this mean no user found in database, so we return LoginError message to frontend

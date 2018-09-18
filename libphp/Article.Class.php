@@ -50,48 +50,44 @@ class Article {
 
     public function saveToDB(object $db_conn)
     {
-        $isPublished = $db_conn->escape($this->isPublished);
-        $title = $db_conn->escape($this->title);
-        $content = $db_conn->escape($this->content);
-        $category = $db_conn->escape($this->category);
-        $kwords = $db_conn->escape($this->kwords);
-        $attImage = $db_conn->escape($this->attImage);
+        $queryInsertToDB = "INSERT INTO `articles` (`is_published`, `title`, `content`, `category`, `kwords`, `att_image`) VALUES (?, ?, ?, ?, ?, ?);";
+        //TODO: add try-catch wrapper to this operation:
+        $stmt = $db_conn->run($queryInsertToDB, [$this->isPublished, $this->title, $this->content, $this->category, $this->kwords, $this->attImage]);
 
-        $sql = "INSERT INTO `articles` (`is_published`, `title`, `content`, `category`, `kwords`, `att_image`) VALUES ('{$isPublished}', '{$title}', '{$content}', '{$category}', '{$kwords}', '{$attImage}');";
-        $sqlResponse = $db_conn->query($sql);
-
-        return ($sqlResponse); //usually true or false
+        if($stmt instanceof PDOStatement)
+            return true;
+        else
+            return false;
     }
 
     public function updateToDB(object $db_conn)
     {
         if (!$this->artID) {return false;} //If user have not specified artID, we don't even try to update something in DB!
-        $artID = $this->artID;
-        $isPublished = $db_conn->escape($this->isPublished);
-        $title = $db_conn->escape($this->title);
-        $content = $db_conn->escape($this->content);
-        $category = $db_conn->escape($this->category);
-        $kwords = $db_conn->escape($this->kwords);
-        $attImage = $db_conn->escape($this->attImage);
 
-        if(empty($attImage)) { //If attImage was not specified, we will not even touch it in DB
-            $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+        if(empty($this->attImage)) { //If attImage was not specified, we will not even touch it in DB
+            $queryUpdateToDB = "UPDATE `articles` SET `is_published` = ?, `title` = ?, `content` = ?, `category` = ?, `kwords` = ? WHERE `art_ID` = ? LIMIT 1;";
+            //TODO: wrap in try-catch
+            $stmt = $db_conn->run($queryUpdateToDB, [$this->isPublished, $this->title, $this->content, $this->category, $this->kwords, $this->artID]);
         } else {
             //Otherwise - rewrite att_image field with new value:
-            $sql = "UPDATE `articles` SET `is_published` = '{$isPublished}', `title` = '{$title}', `content` = '{$content}', `category` = '{$category}', `kwords` = '{$kwords}', `att_image` = '{$attImage}' WHERE `art_ID` = '{$artID}' LIMIT 1;";
+            $queryUpdateToDB = "UPDATE `articles` SET `is_published` = ?, `title` = ?, `content` = ?, `category` = ?, `kwords` = ?, `att_image` = ? WHERE `art_ID` = ? LIMIT 1;";
+            //TODO: wrap in try-catch
+            $stmt = $db_conn->run($queryUpdateToDB, [$this->isPublished, $this->title, $this->content, $this->category, $this->kwords, $this->attImage, $this->artID]);
         }
 
-        $sqlResponse = $db_conn->query($sql);
-
-        return ($sqlResponse); //usually true or false
+        if($stmt instanceof PDOStatement)
+            return true;
+        else
+            return false;
     }
 
     //This method is static because we want to call it at the moment when object still not exists;
     //If read from DB will OK, this method will return us a new Article object
     public static function readFromDB(object $db_conn, $artID)
     {
-        $sql = "SELECT `art_ID`, `is_published`, `title`, `content`, `category`, `kwords`, `att_image` FROM `articles` WHERE `art_ID` = {$artID};";
-        $sqlResponse = $db_conn->query($sql);
+        $queryReadArticle = "SELECT `art_ID`, `is_published`, `title`, `content`, `category`, `kwords`, `att_image` FROM `articles` WHERE `art_ID` = ?;";
+        $stmt = $db_conn->run($queryReadArticle, [$artID]);
+        $sqlResponse = $stmt->fetchAll();
         if(isset($sqlResponse[0])) {
             $id = intval($sqlResponse[0]['art_ID']);
             $isPublished = intval($sqlResponse[0]['is_published']);
